@@ -35,3 +35,29 @@
 - **Manual edits (and why)**: None
 - **Result**: Success - npm run lint and npm run build pass, all 4 routes render with nav
 - **Notes**: /search has noindex,follow per SEO steering doc. SSR confirmed via server timestamp.
+
+## 2026-01-25
+- **Goal**: Spec 1 - Data Model & Supabase Setup
+- **Kiro commands used**: @spec (requirements-first workflow)
+- **Outputs produced**:
+  - .kiro/specs/data-model-supabase/requirements.md
+  - .kiro/specs/data-model-supabase/design.md
+  - .kiro/specs/data-model-supabase/tasks.md
+  - supabase/migrations/0001_init.sql (full schema with RLS)
+  - supabase/config.toml, supabase/seed.sql
+  - src/lib/supabase/server.ts (server-side clients)
+  - src/types/database.types.ts (TypeScript types)
+  - tests/schema.test.ts, tests/rls-policies.test.ts, tests/timestamps.test.ts, tests/search.test.ts
+  - scripts/verify-db.ts
+- **Manual edits (and why)**: None
+- **Result**: Success - all tests pass, schema verified against local Supabase
+- **Notes**: Tables: profiles, bicks, bick_assets, tags, bick_tags, reports. RLS policies enforce live-only public access.
+
+## 2026-01-25 (afternoon)
+- **Goal**: Spec 2 - Public SEO Pages requirements document
+- **Kiro commands used**: @spec (requirements-first workflow)
+- **Outputs produced**:
+  - .kiro/specs/public-seo-pages/requirements.md
+- **Manual edits (and why)**: None
+- **Result**: In progress - requirements document created, awaiting review
+- **Notes**: Covers bick pages, tag pages, embed pages, robots.txt, sitemap.xml, and data fetching functions.
