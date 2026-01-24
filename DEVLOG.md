@@ -54,10 +54,19 @@
 - **Notes**: Tables: profiles, bicks, bick_assets, tags, bick_tags, reports. RLS policies enforce live-only public access.
 
 ## 2026-01-25 (afternoon)
-- **Goal**: Spec 2 - Public SEO Pages requirements document
-- **Kiro commands used**: @spec (requirements-first workflow)
+- **Goal**: Spec 2 - Public SEO Pages + Implementation
+- **Kiro commands used**: @spec (requirements-first workflow), task execution
 - **Outputs produced**:
-  - .kiro/specs/public-seo-pages/requirements.md
-- **Manual edits (and why)**: None
-- **Result**: In progress - requirements document created, awaiting review
-- **Notes**: Covers bick pages, tag pages, embed pages, robots.txt, sitemap.xml, and data fetching functions.
+  - .kiro/specs/public-seo-pages/requirements.md, design.md, tasks.md
+  - src/app/bick/[slugId]/page.tsx (individual bick pages with OG/Twitter/JSON-LD)
+  - src/app/tag/[tag]/page.tsx (tag landing pages with pagination)
+  - src/app/embed/bick/[id]/page.tsx + layout.tsx (minimal embed player)
+  - src/app/robots.txt/route.ts (dynamic robots.txt)
+  - src/app/sitemap.xml/route.ts (dynamic sitemap with live bicks/tags)
+  - src/lib/supabase/queries.ts (data fetching functions)
+  - src/components/bick/BickCard.tsx, BickPlayer.tsx, BickJsonLd.tsx
+  - src/lib/utils/url.ts, duration.ts
+  - scripts/seed-test-data.ts
+- **Manual edits (and why)**: Created test user in auth.users via SQL Editor (required for FK constraint)
+- **Result**: Success - all pages render with correct metadata, sitemap includes live bicks
+- **Notes**: Verified in browser: homepage shows trending bicks, bick pages have full SEO metadata (view-source confirms OG tags, JSON-LD). robots.txt blocks /api/ and /search. sitemap.xml lists all live bicks and tags with lastmod.
