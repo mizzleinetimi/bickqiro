@@ -1,25 +1,61 @@
 # Technical Architecture
 
 ## Technology Stack
-[List your main technologies, frameworks, and tools]
+- **Frontend/SSR**: Next.js 14+ (App Router, SSR/SSG for SEO)
+- **Language**: TypeScript (strict mode)
+- **Database**: Supabase Postgres with Row Level Security
+- **Storage**: Cloudflare R2 + CDN for media assets
+- **Queue**: Redis + BullMQ for async job processing
+- **Media Processing**: FFmpeg worker for audio/video generation
+- **Styling**: Tailwind CSS (recommended)
 
 ## Architecture Overview
-[High-level system architecture and components]
+```
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│   Next.js   │────▶│  Supabase   │     │ Cloudflare  │
+│   (SSR/SSG) │     │  Postgres   │     │   R2 + CDN  │
+└─────────────┘     └─────────────┘     └─────────────┘
+       │                                       ▲
+       ▼                                       │
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│   Upload    │────▶│ Redis/BullMQ│────▶│   FFmpeg    │
+│   Handler   │     │    Queue    │     │   Worker    │
+└─────────────┘     └─────────────┘     └─────────────┘
+```
 
 ## Development Environment
-[Required tools, versions, and setup instructions]
+- Node.js 20+
+- pnpm (recommended) or npm
+- Docker for local Redis/Postgres (optional)
+- FFmpeg installed locally for worker development
+- Supabase CLI for local development
 
 ## Code Standards
-[Coding conventions, style guides, and best practices]
+- TypeScript strict mode enabled
+- ESLint + Prettier for formatting
+- Conventional commits for version control
+- Component-based architecture with React Server Components
+- API routes for backend logic
 
 ## Testing Strategy
-[Testing approaches, frameworks, and coverage requirements]
+- Vitest for unit tests
+- Playwright for E2E tests
+- Test coverage for critical paths (upload, processing, playback)
 
 ## Deployment Process
-[How code gets from development to production]
+- Vercel for Next.js frontend (recommended)
+- Separate worker deployment (Railway, Fly.io, or container)
+- Supabase managed Postgres
+- Cloudflare R2 for storage
 
 ## Performance Requirements
-[Speed, scalability, and resource constraints]
+- Sub-100ms audio playback start
+- CDN-cached media assets globally
+- SSG for SEO-critical pages
+- Efficient queue processing for uploads
 
 ## Security Considerations
-[Security practices, authentication, and data protection]
+- Supabase RLS for data access control
+- Signed URLs for private uploads
+- Input validation on all uploads
+- Rate limiting on API routes
