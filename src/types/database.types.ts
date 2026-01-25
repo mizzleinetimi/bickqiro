@@ -34,15 +34,17 @@ export interface Profile {
 
 export interface Bick {
   id: string;
-  owner_id: string;
+  owner_id: string | null;  // Nullable for anonymous uploads
   slug: string;
   title: string;
   description: string | null;
   status: BickStatus;
   duration_ms: number | null;
+  original_duration_ms: number | null;  // Pre-trim duration tracking
   play_count: number;
   share_count: number;
   original_filename: string | null;
+  source_url: string | null;  // URL extraction attribution
   created_at: string;
   updated_at: string;
   published_at: string | null;
@@ -95,12 +97,15 @@ export interface ProfileInsert {
 }
 
 export interface BickInsert {
-  owner_id: string;
+  owner_id?: string | null;  // Optional for anonymous uploads
   slug: string;
   title: string;
   description?: string | null;
   status?: BickStatus;
+  duration_ms?: number | null;
+  original_duration_ms?: number | null;  // Pre-trim duration tracking
   original_filename?: string | null;
+  source_url?: string | null;  // URL extraction attribution
 }
 
 export interface BickAssetInsert {
@@ -210,7 +215,7 @@ export interface Database {
       bick_tags: {
         Row: BickTag;
         Insert: BickTagInsert;
-        Update: never;
+        Update: Partial<BickTagInsert>;
       };
       reports: {
         Row: Report;
@@ -218,5 +223,13 @@ export interface Database {
         Update: ReportUpdate;
       };
     };
+    Views: Record<string, never>;
+    Functions: Record<string, never>;
+    Enums: {
+      bick_status: BickStatus;
+      asset_type: AssetType;
+      report_status: ReportStatus;
+    };
+    CompositeTypes: Record<string, never>;
   };
 }

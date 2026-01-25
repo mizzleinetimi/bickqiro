@@ -70,3 +70,38 @@
 - **Manual edits (and why)**: Created test user in auth.users via SQL Editor (required for FK constraint)
 - **Result**: Success - all pages render with correct metadata, sitemap includes live bicks
 - **Notes**: Verified in browser: homepage shows trending bicks, bick pages have full SEO metadata (view-source confirms OG tags, JSON-LD). robots.txt blocks /api/ and /search. sitemap.xml lists all live bicks and tags with lastmod.
+
+## 2026-01-25 (evening)
+- **Goal**: Spec 3 - Upload Pipeline + Video-to-Audio Extraction
+- **Kiro commands used**: @spec (requirements-first workflow), task execution
+- **Outputs produced**:
+  - .kiro/specs/upload-pipeline/requirements.md, design.md, tasks.md
+  - supabase/migrations/0002_upload_pipeline.sql (upload_status enum, source_url, original_duration_ms)
+  - src/lib/upload/validation.ts (MIME type, file size, metadata validation)
+  - src/lib/upload/slug.ts (URL-safe slug generation)
+  - src/lib/r2/client.ts (Cloudflare R2 presigned URLs)
+  - src/lib/queue/connection.ts, queues.ts, jobs.ts (BullMQ with lazy init)
+  - src/lib/audio/extractor.ts (yt-dlp URL extraction - server-side)
+  - src/lib/audio/platform.ts (platform detection - client-safe)
+  - src/lib/audio/trimmer.ts (Web Audio API trimming + WAV encoding)
+  - src/lib/audio/video-extractor.ts (client-side video-to-audio extraction)
+  - src/app/api/bicks/extract-url/route.ts
+  - src/app/api/bicks/upload-session/route.ts
+  - src/app/api/bicks/[id]/complete/route.ts
+  - src/components/upload/FileDropzone.tsx (drag-drop with video support)
+  - src/components/upload/UrlExtractor.tsx
+  - src/components/upload/WaveformEditor.tsx (wavesurfer.js visualization)
+  - src/components/upload/MetadataForm.tsx
+  - src/components/upload/UploadForm.tsx (orchestrates full upload flow)
+  - worker/index.ts (placeholder BullMQ worker)
+  - tests/upload/validation.test.ts, slug.test.ts, duration-enforcement.test.ts
+  - tests/audio/trimmer.test.ts, extractor.test.ts
+  - tests/api/upload-session.test.ts, validation-errors.test.ts
+  - tests/r2/client.test.ts, tests/queue/jobs.test.ts
+- **Manual edits (and why)**: None
+- **Result**: Success - full upload flow works, video files extract audio client-side
+- **Notes**: 
+  - Upload flow: file/URL → waveform preview → trim (max 10s) → metadata → R2 upload → job enqueue
+  - Video support: MP4, WebM, MOV, AVI, MKV files auto-extract audio via Web Audio API
+  - Queue uses lazy initialization to avoid Redis connection at build time
+  - 37 validation tests pass including video MIME type acceptance
