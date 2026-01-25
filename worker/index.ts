@@ -2,8 +2,8 @@
  * BullMQ Worker Entry Point
  * 
  * This worker processes bick uploads. In this placeholder implementation,
- * it simply marks bicks as 'live'. The full FFmpeg processing will be
- * implemented in Spec 4.
+ * it creates the original audio asset record and marks bicks as 'live'.
+ * The full FFmpeg processing will be implemented in Spec 4.
  * 
  * **Validates: Requirements 8.4**
  */
@@ -20,6 +20,7 @@ import type { BickProcessingJob } from '../src/lib/queue/jobs';
 const REDIS_URL = process.env.REDIS_URL;
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const CDN_URL = process.env.NEXT_PUBLIC_CDN_URL;
 
 if (!REDIS_URL) {
   throw new Error('REDIS_URL environment variable is required');
@@ -29,47 +30,73 @@ if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
   throw new Error('SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required');
 }
 
+if (!CDN_URL) {
+  throw new Error('NEXT_PUBLIC_CDN_URL environment variable is required');
+}
+
 // Create Supabase admin client
 const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
 /**
+ * Get the public CDN URL for a storage key
+ */
+function getCdnUrl(key: string): string {
+  const baseUrl = CDN_URL!.endsWith('/') ? CDN_URL!.slice(0, -1) : CDN_URL!;
+  return `${baseUrl}/${key}`;
+}
+
+/**
  * Process a bick upload job
  * 
- * Placeholder implementation that marks the bick as 'live'.
- * Full implementation in Spec 4 will:
+ * Creates the original audio asset record and marks the bick as 'live'.
+ * Full implementation in Spec 4 will also:
  * 1. Download audio from R2
  * 2. Validate mime type, size, duration
  * 3. Generate waveform JSON
  * 4. Generate OG image
  * 5. Generate teaser MP4
  * 6. Upload derived assets to R2
- * 7. Create bick_assets records
- * 8. Update bick status to 'live'
  */
 async function processBick(job: Job<BickProcessingJob>): Promise<void> {
   const { bickId, storageKey } = job.data;
   
   console.log(`[Worker] Processing bick ${bickId} from ${storageKey}`);
 
-  // Placeholder: Just mark as live
-  // In Spec 4, this will do actual FFmpeg processing
+  // Create the original audio asset record
+  const cdnUrl = getCdnUrl(storageKey);
+  console.log(`[Worker] Creating asset record with CDN URL: ${cdnUrl}`);
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabase
+  const { error: assetError } = await (supabase
+    .from('bick_assets') as any)
+    .insert({
+      bick_id: bickId,
+      asset_type: 'original',
+      cdn_url: cdnUrl,
+      storage_key: storageKey,
+    });
+
+  if (assetError) {
+    console.error(`[Worker] Failed to create asset for bick ${bickId}:`, assetError);
+    throw new Error(`Failed to create asset record: ${assetError.message}`);
+  }
+
+  // Mark bick as live
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error: updateError } = await (supabase
     .from('bicks') as any)
     .update({ 
       status: 'live',
-      // In Spec 4, we'll also update:
-      // duration_ms: actualDuration,
-      // and create bick_assets records
+      published_at: new Date().toISOString(),
     })
     .eq('id', bickId);
 
-  if (error) {
-    console.error(`[Worker] Failed to update bick ${bickId}:`, error);
-    throw new Error(`Failed to update bick status: ${error.message}`);
+  if (updateError) {
+    console.error(`[Worker] Failed to update bick ${bickId}:`, updateError);
+    throw new Error(`Failed to update bick status: ${updateError.message}`);
   }
 
-  console.log(`[Worker] Bick ${bickId} marked as live`);
+  console.log(`[Worker] Bick ${bickId} marked as live with audio at ${cdnUrl}`);
 }
 
 // Create the worker
