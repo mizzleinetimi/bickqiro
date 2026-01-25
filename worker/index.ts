@@ -8,6 +8,9 @@
  * **Validates: Requirements 8.4**
  */
 
+import { config } from 'dotenv';
+config({ path: '.env.local' });
+
 import { Worker, Job } from 'bullmq';
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from '../src/types/database.types';

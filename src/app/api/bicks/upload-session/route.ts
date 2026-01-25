@@ -223,8 +223,8 @@ export async function POST(request: NextRequest): Promise<NextResponse<UploadSes
       title,
       description: description ?? null,
       status: 'processing',
-      duration_ms: durationMs,
-      original_duration_ms: originalDurationMs ?? null,
+      duration_ms: Math.round(durationMs),
+      original_duration_ms: originalDurationMs ? Math.round(originalDurationMs) : null,
       original_filename: filename,
       source_url: sourceUrl ?? null,
     };

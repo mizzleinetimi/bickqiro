@@ -105,3 +105,14 @@
   - Video support: MP4, WebM, MOV, AVI, MKV files auto-extract audio via Web Audio API
   - Queue uses lazy initialization to avoid Redis connection at build time
   - 37 validation tests pass including video MIME type acceptance
+
+## 2026-01-25 (night)
+- **Goal**: End-to-end upload pipeline testing with real infrastructure
+- **Outputs produced**:
+  - Configured Cloudflare R2 (bucket: bickqr-uploads, CORS enabled)
+  - Configured Railway Redis for BullMQ
+  - Fixed worker dotenv loading for .env.local
+  - Fixed duration_ms integer rounding in upload-session API
+  - Fixed UploadForm redirect to use embed page
+- **Result**: Success - full upload pipeline working end-to-end
+- **Notes**: Upload → R2 → Supabase → Redis queue → Worker marks bick as live

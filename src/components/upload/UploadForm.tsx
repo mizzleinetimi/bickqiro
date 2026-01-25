@@ -350,7 +350,7 @@ export function UploadForm() {
             </button>
             {state.bickId && (
               <a
-                href={`/bick/${state.bickId}`}
+                href={`/embed/bick/${state.bickId}`}
                 className="inline-block px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
               >
                 View Bick
