@@ -147,3 +147,5 @@
 
 ## 2026-01-25
 - Implemented search & trending: full-text search with tsvector, precomputed trending scores with decay formula, worker job on 15-min schedule. 46 tests passing.
+- Fixed search RPC function (type mismatch FLOAT→REAL for ts_rank)
+- Fixed SearchInput to use client-side navigation (no page reload)
