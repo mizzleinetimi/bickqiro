@@ -124,3 +124,21 @@
   - Worker creates bick_assets record with CDN URL
   - BickPlayer now functional with play/pause and progress bar
 - **Result**: Full upload-to-playback flow working
+
+
+## 2026-01-25 (continued)
+- **Goal**: Spec 4 - FFmpeg Worker Implementation
+- **Outputs produced**:
+  - .kiro/specs/ffmpeg-worker/requirements.md, design.md, tasks.md
+  - worker/types.ts (ProcessingResult, FFmpegResult, WaveformData, ProcessingError)
+  - worker/lib/ffmpeg.ts (runFFmpeg, getAudioDuration, validateAudio)
+  - worker/lib/downloader.ts (downloadAudio, cleanupTempFiles)
+  - worker/lib/uploader.ts (uploadAsset, generateStorageKey)
+  - worker/lib/waveform.ts (generateWaveformJson, extractPeaks)
+  - worker/lib/og-image.ts (generateOgImage - 1200x630 PNG with waveform overlay)
+  - worker/lib/teaser.ts (generateTeaser - 1280x720 MP4 with animated waveform)
+  - worker/processors/bick-processor.ts (full processing pipeline orchestration)
+  - tests/worker/*.test.ts (63 tests across 10 files)
+  - tests/fixtures/valid-audio.mp3, invalid-audio.txt
+- **Result**: Success - all 63 worker tests pass
+- **Notes**: Worker generates waveform JSON, OG image, and teaser MP4 for each upload. Uses brand-thumb.jpg as background.
