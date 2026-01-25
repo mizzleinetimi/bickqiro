@@ -88,3 +88,100 @@ export async function enqueueBickProcessing(
   
   return result.id!;
 }
+
+import { type TrendingCalculatorJob, isValidTrendingCalculatorJob } from './jobs';
+
+/**
+ * Lazy-initialized trending calculator queue instance.
+ */
+let _trendingCalculatorQueue: Queue | null = null;
+
+/**
+ * Gets or creates the trending calculator queue.
+ * 
+ * Handles periodic calculation of trending scores for all live bicks.
+ * 
+ * Configuration:
+ * - 3 retry attempts with exponential backoff
+ * - Keeps last 10 completed jobs
+ * - Keeps last 100 failed jobs
+ * 
+ * @requirements 7.1 - Trending calculator job queue
+ */
+export function getTrendingCalculatorQueue(): Queue {
+  if (!_trendingCalculatorQueue) {
+    _trendingCalculatorQueue = new Queue('trending-calculator', {
+      connection: createRedisConnection(),
+      defaultJobOptions: {
+        attempts: 3,
+        backoff: {
+          type: 'exponential',
+          delay: 5000,
+        },
+        removeOnComplete: 10,
+        removeOnFail: 100,
+      },
+    });
+  }
+  return _trendingCalculatorQueue;
+}
+
+/**
+ * Enqueues a trending calculation job.
+ * 
+ * Creates a job to recalculate trending scores for all live bicks.
+ * Uses a fixed job ID to prevent duplicate concurrent calculations.
+ * 
+ * @param job - The job payload (optional force flag)
+ * @returns The job ID assigned by BullMQ
+ * @throws Error if the job payload is invalid or queue operation fails
+ * 
+ * @requirements 7.1 - Trending calculator job
+ */
+export async function enqueueTrendingCalculation(
+  job: TrendingCalculatorJob = { type: 'calculate-trending' }
+): Promise<string> {
+  if (!isValidTrendingCalculatorJob(job)) {
+    throw new Error('Invalid job payload: type must be "calculate-trending"');
+  }
+  
+  const queue = getTrendingCalculatorQueue();
+  const result = await queue.add('calculate-trending', job, {
+    jobId: 'trending-calculation', // Fixed ID to prevent duplicates
+  });
+  
+  return result.id!;
+}
+
+/**
+ * Schedules recurring trending calculation.
+ * 
+ * Sets up a repeating job that runs every 15 minutes.
+ * 
+ * @requirements 7.1 - Configure 15-minute repeat interval
+ */
+export async function scheduleTrendingCalculation(): Promise<void> {
+  const queue = getTrendingCalculatorQueue();
+  
+  // Remove any existing repeatable job first
+  const repeatableJobs = await queue.getRepeatableJobs();
+  for (const job of repeatableJobs) {
+    if (job.name === 'calculate-trending') {
+      await queue.removeRepeatableByKey(job.key);
+    }
+  }
+  
+  // Add new repeatable job - every 15 minutes
+  await queue.add(
+    'calculate-trending',
+    { type: 'calculate-trending' } as TrendingCalculatorJob,
+    {
+      repeat: {
+        every: 15 * 60 * 1000, // 15 minutes in milliseconds
+      },
+      jobId: 'trending-calculation-scheduled',
+    }
+  );
+  
+  console.log('Scheduled trending calculation to run every 15 minutes');
+}

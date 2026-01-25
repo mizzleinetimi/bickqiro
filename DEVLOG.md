@@ -144,3 +144,6 @@
 - **Notes**: Worker generates waveform JSON, OG image, and teaser MP4 for each upload. Uses brand-thumb.jpg as background.
 
 - Added asset URLs display on bick page (teaser MP4, OG image, waveform, audio links)
+
+## 2026-01-25
+- Implemented search & trending: full-text search with tsvector, precomputed trending scores with decay formula, worker job on 15-min schedule. 46 tests passing.

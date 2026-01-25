@@ -192,3 +192,242 @@ export async function getTrendingBicks(limit: number = 10): Promise<Bick[]> {
   if (error || !bicks) return [];
   return bicks as Bick[];
 }
+
+
+// ============================================================================
+// SEARCH & TRENDING QUERIES
+// ============================================================================
+
+import type { SearchBick, TrendingBick, SearchCursor, TrendingCursor } from '@/types/database.types';
+
+/**
+ * Search options for full-text search
+ */
+export interface SearchOptions {
+  query: string;
+  cursor?: string;
+  limit?: number;
+}
+
+/**
+ * Search result with pagination
+ */
+export interface SearchResult {
+  bicks: SearchBick[];
+  nextCursor: string | null;
+}
+
+/**
+ * Decode a base64 cursor into SearchCursor
+ */
+function decodeSearchCursor(cursor: string): SearchCursor | null {
+  try {
+    const decoded = Buffer.from(cursor, 'base64').toString('utf-8');
+    const parsed = JSON.parse(decoded);
+    if (typeof parsed.score === 'number' && typeof parsed.id === 'string') {
+      return parsed as SearchCursor;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Encode a SearchCursor to base64
+ */
+function encodeSearchCursor(cursor: SearchCursor): string {
+  return Buffer.from(JSON.stringify(cursor)).toString('base64');
+}
+
+/**
+ * Full-text search for bicks
+ * Uses PostgreSQL tsvector with weighted title (A) and description (B) search
+ * Returns only live bicks, ordered by relevance
+ */
+export async function searchBicks(options: SearchOptions): Promise<SearchResult> {
+  const { query, cursor, limit = 20 } = options;
+  const supabase = await createClient();
+  
+  // Sanitize query - remove special characters that could break tsquery
+  const sanitizedQuery = query
+    .trim()
+    .replace(/[^\w\s]/g, ' ')
+    .split(/\s+/)
+    .filter(word => word.length > 0)
+    .join(' | '); // OR logic for multi-word search
+  
+  if (!sanitizedQuery) {
+    return { bicks: [], nextCursor: null };
+  }
+
+  // Parse cursor if provided
+  let cursorData: SearchCursor | null = null;
+  if (cursor) {
+    cursorData = decodeSearchCursor(cursor);
+  }
+
+  // Use raw SQL for full-text search with ts_rank
+  // We need to use RPC or raw query for proper tsvector search
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase.rpc as any)('search_bicks', {
+    search_query: sanitizedQuery,
+    cursor_score: cursorData?.score ?? null,
+    cursor_id: cursorData?.id ?? null,
+    result_limit: limit + 1
+  });
+
+  if (error) {
+    console.error('Search error:', error);
+    return { bicks: [], nextCursor: null };
+  }
+
+  const results = (data || []) as SearchBick[];
+  const hasMore = results.length > limit;
+  const bicks = hasMore ? results.slice(0, limit) : results;
+  
+  let nextCursor: string | null = null;
+  if (hasMore && bicks.length > 0) {
+    const lastBick = bicks[bicks.length - 1];
+    nextCursor = encodeSearchCursor({
+      score: lastBick.search_rank ?? 0,
+      id: lastBick.id
+    });
+  }
+
+  return { bicks, nextCursor };
+}
+
+/**
+ * Trending options for paginated trending queries
+ */
+export interface TrendingOptions {
+  cursor?: string;
+  limit?: number;
+}
+
+/**
+ * Trending result with pagination
+ */
+export interface TrendingResult {
+  bicks: TrendingBick[];
+  nextCursor: string | null;
+}
+
+/**
+ * Decode a base64 cursor into TrendingCursor
+ */
+function decodeTrendingCursor(cursor: string): TrendingCursor | null {
+  try {
+    const decoded = Buffer.from(cursor, 'base64').toString('utf-8');
+    const parsed = JSON.parse(decoded);
+    if (typeof parsed.rank === 'number' && typeof parsed.id === 'string') {
+      return parsed as TrendingCursor;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Encode a TrendingCursor to base64
+ */
+function encodeTrendingCursor(cursor: TrendingCursor): string {
+  return Buffer.from(JSON.stringify(cursor)).toString('base64');
+}
+
+/**
+ * Get trending bicks with pagination
+ * Uses precomputed trending_scores table
+ */
+export async function getTrendingBicksPaginated(options: TrendingOptions = {}): Promise<TrendingResult> {
+  const { cursor, limit = 20 } = options;
+  const supabase = await createClient();
+  
+  // Parse cursor if provided
+  let cursorData: TrendingCursor | null = null;
+  if (cursor) {
+    cursorData = decodeTrendingCursor(cursor);
+  }
+
+  // Build query joining bicks with trending_scores
+  let query = supabase
+    .from('trending_scores')
+    .select(`
+      score,
+      rank,
+      bick:bicks!inner(
+        *,
+        assets:bick_assets(*)
+      )
+    `)
+    .order('rank', { ascending: true })
+    .limit(limit + 1);
+
+  // Apply cursor filter
+  if (cursorData) {
+    query = query.or(`rank.gt.${cursorData.rank},and(rank.eq.${cursorData.rank},bick_id.gt.${cursorData.id})`);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.error('Trending query error:', error);
+    return { bicks: [], nextCursor: null };
+  }
+
+  // Transform results to TrendingBick format
+  const results: TrendingBick[] = (data || []).map((row: { score: number; rank: number; bick: BickWithAssets }) => ({
+    ...row.bick,
+    trending_score: row.score,
+    trending_rank: row.rank
+  }));
+
+  const hasMore = results.length > limit;
+  const bicks = hasMore ? results.slice(0, limit) : results;
+  
+  let nextCursor: string | null = null;
+  if (hasMore && bicks.length > 0) {
+    const lastBick = bicks[bicks.length - 1];
+    nextCursor = encodeTrendingCursor({
+      rank: lastBick.trending_rank ?? 0,
+      id: lastBick.id
+    });
+  }
+
+  return { bicks, nextCursor };
+}
+
+/**
+ * Get top N trending bicks (for homepage)
+ * Simple limit-based query without pagination
+ */
+export async function getTopTrendingBicks(limit: number = 6): Promise<TrendingBick[]> {
+  const supabase = await createClient();
+  
+  const { data, error } = await supabase
+    .from('trending_scores')
+    .select(`
+      score,
+      rank,
+      bick:bicks!inner(
+        *,
+        assets:bick_assets(*)
+      )
+    `)
+    .order('rank', { ascending: true })
+    .limit(limit);
+
+  if (error) {
+    console.error('Top trending query error:', error);
+    return [];
+  }
+
+  // Transform results to TrendingBick format
+  return (data || []).map((row: { score: number; rank: number; bick: BickWithAssets }) => ({
+    ...row.bick,
+    trending_score: row.score,
+    trending_rank: row.rank
+  }));
+}

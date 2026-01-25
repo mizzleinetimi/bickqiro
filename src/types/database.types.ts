@@ -85,6 +85,13 @@ export interface Report {
   created_at: string;
 }
 
+export interface TrendingScore {
+  bick_id: string;
+  score: number;
+  rank: number;
+  computed_at: string;
+}
+
 // ============================================================================
 // INSERT TYPES (for creating new records)
 // ============================================================================
@@ -186,6 +193,41 @@ export interface TagWithBicks extends Tag {
 }
 
 // ============================================================================
+// SEARCH & TRENDING TYPES
+// ============================================================================
+
+/**
+ * Cursor for search pagination (score-based)
+ */
+export interface SearchCursor {
+  score: number;
+  id: string;
+}
+
+/**
+ * Cursor for trending pagination (rank-based)
+ */
+export interface TrendingCursor {
+  rank: number;
+  id: string;
+}
+
+/**
+ * Bick with search relevance score
+ */
+export interface SearchBick extends BickWithAssets {
+  search_rank?: number;
+}
+
+/**
+ * Bick with trending score
+ */
+export interface TrendingBick extends BickWithAssets {
+  trending_score?: number;
+  trending_rank?: number;
+}
+
+// ============================================================================
 // SUPABASE DATABASE TYPE (for typed client)
 // ============================================================================
 
@@ -222,9 +264,42 @@ export interface Database {
         Insert: ReportInsert;
         Update: ReportUpdate;
       };
+      trending_scores: {
+        Row: TrendingScore;
+        Insert: Omit<TrendingScore, 'computed_at'> & { computed_at?: string };
+        Update: Partial<TrendingScore>;
+      };
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      search_bicks: {
+        Args: {
+          search_query: string;
+          cursor_score?: number | null;
+          cursor_id?: string | null;
+          result_limit?: number;
+        };
+        Returns: {
+          id: string;
+          owner_id: string | null;
+          slug: string;
+          title: string;
+          description: string | null;
+          status: string;
+          duration_ms: number | null;
+          original_duration_ms: number | null;
+          play_count: number;
+          share_count: number;
+          original_filename: string | null;
+          source_url: string | null;
+          created_at: string;
+          updated_at: string;
+          published_at: string | null;
+          search_rank: number;
+          assets: BickAsset[];
+        }[];
+      };
+    };
     Enums: {
       bick_status: BickStatus;
       asset_type: AssetType;

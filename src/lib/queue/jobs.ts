@@ -44,3 +44,32 @@ export function isValidBickProcessingJob(job: unknown): job is BickProcessingJob
     payload.originalFilename.length > 0
   );
 }
+
+/**
+ * Job payload for trending score calculation.
+ * This job has no payload - it processes all live bicks.
+ * 
+ * @requirements 7.1 - Trending calculator job type
+ */
+export interface TrendingCalculatorJob {
+  /** Job type identifier */
+  type: 'calculate-trending';
+  /** Optional: force recalculation even if recently computed */
+  force?: boolean;
+}
+
+/**
+ * Validates that a job payload is a valid trending calculator job.
+ * 
+ * @param job - The job payload to validate
+ * @returns true if the job has valid structure
+ */
+export function isValidTrendingCalculatorJob(job: unknown): job is TrendingCalculatorJob {
+  if (typeof job !== 'object' || job === null) {
+    return false;
+  }
+  
+  const payload = job as Record<string, unknown>;
+  
+  return payload.type === 'calculate-trending';
+}
