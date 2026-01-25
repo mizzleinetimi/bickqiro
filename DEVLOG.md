@@ -142,3 +142,5 @@
   - tests/fixtures/valid-audio.mp3, invalid-audio.txt
 - **Result**: Success - all 63 worker tests pass
 - **Notes**: Worker generates waveform JSON, OG image, and teaser MP4 for each upload. Uses brand-thumb.jpg as background.
+
+- Added asset URLs display on bick page (teaser MP4, OG image, waveform, audio links)

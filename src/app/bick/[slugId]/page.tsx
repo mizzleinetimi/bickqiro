@@ -55,6 +55,8 @@ export default async function BickPage({ params }: BickPageProps) {
 
   const audioAsset = bick.assets?.find(a => a.asset_type === 'audio' || a.asset_type === 'original');
   const ogImage = bick.assets?.find(a => a.asset_type === 'og_image');
+  const teaser = bick.assets?.find(a => a.asset_type === 'teaser_mp4');
+  const waveform = bick.assets?.find(a => a.asset_type === 'waveform_json');
 
   return (
     <div className="max-w-2xl mx-auto">
@@ -75,6 +77,43 @@ export default async function BickPage({ params }: BickPageProps) {
       <div className="mt-6 text-sm text-gray-500">
         <p>Plays: {bick.play_count.toLocaleString()}</p>
         <p>Shares: {bick.share_count.toLocaleString()}</p>
+      </div>
+
+      {/* Asset URLs for testing/debugging */}
+      <div className="mt-8 p-4 bg-gray-100 rounded-lg text-xs font-mono space-y-2">
+        <p className="font-bold text-gray-700 mb-2">Generated Assets:</p>
+        {teaser?.cdn_url && (
+          <div>
+            <span className="text-gray-500">Teaser MP4:</span>
+            <a href={teaser.cdn_url} target="_blank" rel="noopener" className="ml-2 text-blue-600 hover:underline break-all">
+              {teaser.cdn_url}
+            </a>
+          </div>
+        )}
+        {ogImage?.cdn_url && (
+          <div>
+            <span className="text-gray-500">OG Image:</span>
+            <a href={ogImage.cdn_url} target="_blank" rel="noopener" className="ml-2 text-blue-600 hover:underline break-all">
+              {ogImage.cdn_url}
+            </a>
+          </div>
+        )}
+        {waveform?.cdn_url && (
+          <div>
+            <span className="text-gray-500">Waveform:</span>
+            <a href={waveform.cdn_url} target="_blank" rel="noopener" className="ml-2 text-blue-600 hover:underline break-all">
+              {waveform.cdn_url}
+            </a>
+          </div>
+        )}
+        {audioAsset?.cdn_url && (
+          <div>
+            <span className="text-gray-500">Audio:</span>
+            <a href={audioAsset.cdn_url} target="_blank" rel="noopener" className="ml-2 text-blue-600 hover:underline break-all">
+              {audioAsset.cdn_url}
+            </a>
+          </div>
+        )}
       </div>
     </div>
   );
