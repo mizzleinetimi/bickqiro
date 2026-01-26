@@ -149,3 +149,30 @@
 - Implemented search & trending: full-text search with tsvector, precomputed trending scores with decay formula, worker job on 15-min schedule. 46 tests passing.
 - Fixed search RPC function (type mismatch FLOAT→REAL for ts_rank)
 - Fixed SearchInput to use client-side navigation (no page reload)
+
+## 2026-01-26
+- **Goal**: Spec 5 - User Authentication with Email OTP → Email/Password + Google OAuth
+- **Kiro commands used**: @spec (requirements-first workflow), task execution
+- **Outputs produced**:
+  - .kiro/specs/user-authentication/requirements.md, design.md, tasks.md
+  - middleware.ts (session refresh, route protection, OAuth code redirect)
+  - src/lib/auth/actions.ts (signUp, signIn, signInWithGoogle, signOut, getUser, getUserProfile)
+  - src/lib/auth/profile.ts (generateUsername, ensureUniqueUsername, createProfile, getOrCreateProfile)
+  - src/app/auth/callback/route.ts (OAuth code exchange + OTP handler)
+  - src/app/auth/sign-in/page.tsx (email/password + Google OAuth)
+  - src/components/auth/SignInForm.tsx (Google button + email/password form)
+  - src/components/auth/UserMenu.tsx, index.ts
+  - src/components/layout/NavShell.tsx (updated with auth state)
+  - src/app/my-bicks/page.tsx (user's bicks dashboard)
+  - src/app/upload/page.tsx (auth protection added)
+  - src/lib/supabase/queries.ts (getUserBicks, BickWithOwner type)
+  - src/app/bick/[slugId]/page.tsx (owner attribution display)
+  - tests/auth/profile.test.ts, callback.test.ts, my-bicks.test.ts, upload-owner.test.ts
+  - tests/components/auth.test.tsx
+- **Result**: Success - Google OAuth working, email/password available as fallback
+- **Notes**: 
+  - Switched from email OTP to email/password + Google OAuth (Supabase email rate limits)
+  - Google OAuth is primary sign-in method for dev (no email required)
+  - Middleware redirects OAuth codes from root to /auth/callback
+  - Auto profile creation on first sign-in with username from email prefix
+  - Protected routes redirect to sign-in with `next` param preservation

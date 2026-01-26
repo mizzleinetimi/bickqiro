@@ -1,4 +1,6 @@
 import type { Metadata } from 'next';
+import { redirect } from 'next/navigation';
+import { getUser } from '@/lib/auth/actions';
 import { UploadForm } from '@/components/upload';
 
 export const metadata: Metadata = {
@@ -7,7 +9,13 @@ export const metadata: Metadata = {
   robots: 'noindex,follow', // Upload page should not be indexed
 };
 
-export default function UploadPage() {
+export default async function UploadPage() {
+  const user = await getUser();
+
+  if (!user) {
+    redirect('/auth/sign-in?next=/upload');
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 py-12">
       <div className="max-w-3xl mx-auto px-4">

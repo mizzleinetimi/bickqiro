@@ -3,7 +3,14 @@
  * All public queries filter by status='live' for RLS compliance
  */
 import { createClient } from './server';
-import type { Bick, Tag, BickWithAssets } from '@/types/database.types';
+import type { Bick, Tag, BickWithAssets, Profile } from '@/types/database.types';
+
+/**
+ * Bick with assets and owner profile
+ */
+export interface BickWithOwner extends BickWithAssets {
+  owner?: Profile | null;
+}
 
 /**
  * Fetch a single bick by slug and ID
@@ -12,14 +19,15 @@ import type { Bick, Tag, BickWithAssets } from '@/types/database.types';
 export async function getBickBySlugAndId(
   slug: string,
   id: string
-): Promise<BickWithAssets | null> {
+): Promise<BickWithOwner | null> {
   const supabase = await createClient();
   
   const { data: bick, error } = await supabase
     .from('bicks')
     .select(`
       *,
-      assets:bick_assets(*)
+      assets:bick_assets(*),
+      owner:profiles(*)
     `)
     .eq('id', id)
     .eq('slug', slug)
@@ -27,7 +35,7 @@ export async function getBickBySlugAndId(
     .single();
 
   if (error || !bick) return null;
-  return bick as BickWithAssets;
+  return bick as BickWithOwner;
 }
 
 /**
@@ -430,4 +438,67 @@ export async function getTopTrendingBicks(limit: number = 6): Promise<TrendingBi
     trending_score: row.score,
     trending_rank: row.rank
   }));
+}
+
+
+// ============================================================================
+// USER BICKS QUERIES
+// ============================================================================
+
+/**
+ * User bicks options for paginated queries
+ */
+export interface UserBicksOptions {
+  cursor?: string;
+  limit?: number;
+}
+
+/**
+ * User bicks result with pagination
+ */
+export interface UserBicksResult {
+  bicks: Bick[];
+  nextCursor: string | null;
+}
+
+/**
+ * Get bicks owned by a specific user
+ * Includes all statuses (processing, live, failed, removed)
+ * Uses cursor-based pagination
+ */
+export async function getUserBicks(
+  userId: string,
+  options: UserBicksOptions = {}
+): Promise<UserBicksResult> {
+  const { cursor, limit = 20 } = options;
+  const supabase = await createClient();
+
+  let query = supabase
+    .from('bicks')
+    .select('*')
+    .eq('owner_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(limit + 1);
+
+  if (cursor) {
+    query = query.lt('created_at', cursor);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.error('User bicks query error:', error);
+    return { bicks: [], nextCursor: null };
+  }
+
+  const results = (data || []) as Bick[];
+  const hasMore = results.length > limit;
+  const bicks = hasMore ? results.slice(0, limit) : results;
+
+  let nextCursor: string | null = null;
+  if (hasMore && bicks.length > 0) {
+    nextCursor = bicks[bicks.length - 1].created_at;
+  }
+
+  return { bicks, nextCursor };
 }

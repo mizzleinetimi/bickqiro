@@ -57,12 +57,21 @@ export default async function BickPage({ params }: BickPageProps) {
   const ogImage = bick.assets?.find(a => a.asset_type === 'og_image');
   const teaser = bick.assets?.find(a => a.asset_type === 'teaser_mp4');
   const waveform = bick.assets?.find(a => a.asset_type === 'waveform_json');
+  
+  // Get owner display name
+  const ownerName = bick.owner?.display_name || bick.owner?.username;
 
   return (
     <div className="max-w-2xl mx-auto">
       <BickJsonLd bick={bick} audioUrl={audioAsset?.cdn_url} ogImageUrl={ogImage?.cdn_url} />
       
-      <h1 className="text-3xl font-bold mb-4">{bick.title}</h1>
+      <h1 className="text-3xl font-bold mb-2">{bick.title}</h1>
+      
+      {ownerName && (
+        <p className="text-sm text-gray-500 mb-4">
+          by <span className="font-medium text-gray-700">{ownerName}</span>
+        </p>
+      )}
       
       {bick.description && (
         <p className="text-gray-600 mb-6">{bick.description}</p>

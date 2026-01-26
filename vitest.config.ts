@@ -10,7 +10,9 @@ export default defineConfig({
     environmentMatchGlobs: [
       // Use jsdom for component tests
       ['tests/components/**', 'jsdom'],
+      ['tests/auth/components.test.tsx', 'jsdom'],
     ],
+    setupFiles: ['tests/components/setup.ts'],
   },
   resolve: {
     alias: {
