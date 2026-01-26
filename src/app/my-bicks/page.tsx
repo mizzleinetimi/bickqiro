@@ -72,7 +72,7 @@ export default async function MyBicksPage() {
                   <div className="flex items-center justify-between">
                     <div className="min-w-0 flex-1">
                       <Link
-                        href={bick.status === 'live' ? `/bick/${bick.slug_id}` : '#'}
+                        href={bick.status === 'live' ? `/bick/${bick.slug}-${bick.id}` : '#'}
                         className={`text-sm font-medium ${
                           bick.status === 'live'
                             ? 'text-indigo-600 hover:text-indigo-500'

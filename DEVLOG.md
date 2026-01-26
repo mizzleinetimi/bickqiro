@@ -176,3 +176,15 @@
   - Middleware redirects OAuth codes from root to /auth/callback
   - Auto profile creation on first sign-in with username from email prefix
   - Protected routes redirect to sign-in with `next` param preservation
+
+## 2026-01-26 (continued)
+- **Goal**: Fix new bicks not appearing on homepage/trending
+- **Issue**: New bicks were marked as `live` but didn't appear on homepage because they had no `trending_scores` entry
+- **Outputs produced**:
+  - worker/processors/bick-processor.ts (adds initial trending score when bick goes live)
+  - src/app/bick/[slugId]/page.tsx (removed unused embedUrl variable)
+- **Result**: Success - new bicks now appear immediately on homepage after processing
+- **Notes**: 
+  - Worker now inserts trending_scores entry with score=0, rank=0 when marking bick as live
+  - Trending calculator will recalculate proper scores on next 15-min run
+  - Manually ran trending calculator to fix existing bick (9 bicks processed)

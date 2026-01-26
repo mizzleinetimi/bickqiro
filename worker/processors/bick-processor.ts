@@ -190,6 +190,23 @@ export async function processBick(
       );
     }
 
+    // 8. Add initial trending score so bick appears on homepage immediately
+    // New bicks get score=0 and rank=0 (will be recalculated by trending job)
+    console.log(`[Processor] Adding initial trending score for bick ${bickId}`);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error: trendingError } = await (supabase.from('trending_scores') as any)
+      .upsert({
+        bick_id: bickId,
+        score: 0,
+        rank: 0,
+        computed_at: publishedAt,
+      }, { onConflict: 'bick_id' });
+
+    if (trendingError) {
+      // Non-fatal: bick is live, just won't appear in trending until next calculation
+      console.warn(`[Processor] Failed to add trending score: ${trendingError.message}`);
+    }
+
     console.log(`[Processor] Successfully processed bick ${bickId}`);
 
     return {

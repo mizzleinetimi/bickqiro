@@ -21,7 +21,6 @@ export async function generateMetadata({ params }: BickPageProps): Promise<Metad
   const teaser = bick.assets?.find(a => a.asset_type === 'teaser_mp4')?.cdn_url;
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://bickqr.com';
   const canonical = `${baseUrl}/bick/${bick.slug}-${bick.id}`;
-  const embedUrl = `${baseUrl}/embed/bick/${bick.id}`;
 
   return {
     title: bick.title,
