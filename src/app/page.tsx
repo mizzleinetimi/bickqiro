@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { getTopTrendingBicks } from '@/lib/supabase/queries';
 import { BickCard } from '@/components/bick/BickCard';
 import { SearchInput } from '@/components/search';
+import { PopularTags } from '@/components/tags/PopularTags';
 
 export default async function HomePage() {
   const bicks = await getTopTrendingBicks(6);
@@ -42,6 +43,9 @@ export default async function HomePage() {
           </p>
         )}
       </section>
+      
+      {/* Popular Tags Section */}
+      <PopularTags limit={12} title="Popular Tags" />
     </div>
   );
 }

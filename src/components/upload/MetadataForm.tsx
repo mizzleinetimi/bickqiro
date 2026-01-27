@@ -3,8 +3,9 @@
  * 
  * Form for entering bick metadata: title, description, and tags.
  * Includes validation and character counts.
+ * Uses TagInput with TagAutocomplete for tag suggestions.
  * 
- * **Validates: Requirements 5.1, 5.2, 5.3, 5.4, 5.5**
+ * **Validates: Requirements 5.1, 5.2, 5.3, 5.4, 5.5, 1.1, 1.2, 1.3, 1.7**
  */
 'use client';
 
@@ -17,6 +18,7 @@ import {
   DESCRIPTION_MAX_LENGTH,
   MAX_TAGS,
 } from '@/lib/upload/validation';
+import { TagInput } from '@/components/tags/TagInput';
 
 export interface UploadMetadata {
   title: string;
@@ -40,7 +42,6 @@ export function MetadataForm({
 }: MetadataFormProps) {
   const [title, setTitle] = useState(initialValues?.title || '');
   const [description, setDescription] = useState(initialValues?.description || '');
-  const [tagInput, setTagInput] = useState('');
   const [tags, setTags] = useState<string[]>(initialValues?.tags || []);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -82,36 +83,13 @@ export function MetadataForm({
     });
   }, [title, description, tags, validateForm, onSubmit]);
 
-  const handleAddTag = useCallback(() => {
-    const tag = tagInput.trim().toLowerCase().replace(/[^a-z0-9-]/g, '');
-    
-    if (!tag) return;
-    if (tags.includes(tag)) {
-      setTagInput('');
-      return;
-    }
-    if (tags.length >= MAX_TAGS) {
-      setErrors(prev => ({ ...prev, tags: `Maximum ${MAX_TAGS} tags allowed` }));
-      return;
-    }
-
-    setTags(prev => [...prev, tag]);
-    setTagInput('');
+  const handleTagsChange = useCallback((newTags: string[]) => {
+    setTags(newTags);
+    // Clear tag errors when tags change
     setErrors(prev => {
       const { tags: _, ...rest } = prev;
       return rest;
     });
-  }, [tagInput, tags]);
-
-  const handleTagKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' || e.key === ',') {
-      e.preventDefault();
-      handleAddTag();
-    }
-  }, [handleAddTag]);
-
-  const handleRemoveTag = useCallback((tagToRemove: string) => {
-    setTags(prev => prev.filter(t => t !== tagToRemove));
   }, []);
 
   return (
@@ -176,71 +154,22 @@ export function MetadataForm({
 
       {/* Tags */}
       <div>
-        <label htmlFor="tags" className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-sm font-medium text-gray-700 mb-1">
           Tags <span className="text-gray-400">(optional)</span>
         </label>
         
-        {/* Tag input */}
-        <div className="flex gap-2">
-          <input
-            id="tags"
-            type="text"
-            value={tagInput}
-            onChange={(e) => setTagInput(e.target.value)}
-            onKeyDown={handleTagKeyDown}
-            placeholder="Add tags (press Enter)"
-            disabled={isSubmitting || tags.length >= MAX_TAGS}
-            className={`flex-1 px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100 ${
-              errors.tags ? 'border-red-500' : 'border-gray-300'
-            }`}
-          />
-          <button
-            type="button"
-            onClick={handleAddTag}
-            disabled={isSubmitting || !tagInput.trim() || tags.length >= MAX_TAGS}
-            className="px-4 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            Add
-          </button>
-        </div>
+        <TagInput
+          value={tags}
+          onChange={handleTagsChange}
+          maxTags={MAX_TAGS}
+          disabled={isSubmitting}
+          placeholder="Add tags..."
+          showAutocomplete
+        />
 
-        {/* Tag list */}
-        {tags.length > 0 && (
-          <div className="flex flex-wrap gap-2 mt-3">
-            {tags.map((tag) => (
-              <span
-                key={tag}
-                className="inline-flex items-center gap-1 px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full text-sm"
-              >
-                #{tag}
-                <button
-                  type="button"
-                  onClick={() => handleRemoveTag(tag)}
-                  disabled={isSubmitting}
-                  className="hover:text-indigo-900 disabled:cursor-not-allowed"
-                  aria-label={`Remove tag ${tag}`}
-                >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </span>
-            ))}
-          </div>
+        {errors.tags && (
+          <p className="text-sm text-red-600 mt-1">{errors.tags}</p>
         )}
-
-        <div className="flex justify-between mt-1">
-          {errors.tags ? (
-            <p className="text-sm text-red-600">{errors.tags}</p>
-          ) : (
-            <p className="text-xs text-gray-500">
-              Use letters, numbers, and hyphens only
-            </p>
-          )}
-          <span className="text-xs text-gray-500">
-            {tags.length}/{MAX_TAGS}
-          </span>
-        </div>
       </div>
 
       {/* Submit button */}

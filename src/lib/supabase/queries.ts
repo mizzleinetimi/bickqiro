@@ -5,16 +5,118 @@
 import { createClient } from './server';
 import type { Bick, Tag, BickWithAssets, Profile } from '@/types/database.types';
 
+// ============================================================================
+// TAG QUERIES (defined first as they're used by other queries)
+// ============================================================================
+
+/**
+ * Get tags for a specific bick
+ */
+export async function getBickTags(
+  bickId: string
+): Promise<Array<{ id: string; name: string; slug: string }>> {
+  const supabase = await createClient();
+  
+  const { data, error } = await supabase
+    .from('bick_tags')
+    .select(`
+      tag:tags(id, name, slug)
+    `)
+    .eq('bick_id', bickId);
+
+  if (error || !data) return [];
+  
+  // Extract tags from the joined result
+  return data
+    .map((row: { tag: { id: string; name: string; slug: string } | null }) => row.tag)
+    .filter((tag): tag is { id: string; name: string; slug: string } => tag !== null);
+}
+
+/**
+ * Search tags by prefix for autocomplete
+ */
+export async function searchTags(
+  prefix: string,
+  excludeSlugs: string[] = [],
+  limit: number = 10
+): Promise<Array<{ id: string; name: string; slug: string; bick_count: number }>> {
+  const supabase = await createClient();
+  
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase.rpc as any)('search_tags', {
+    search_prefix: prefix.toLowerCase(),
+    exclude_slugs: excludeSlugs,
+    result_limit: limit,
+  });
+
+  if (error) {
+    console.error('Search tags error:', error);
+    return [];
+  }
+
+  return (data || []) as Array<{ id: string; name: string; slug: string; bick_count: number }>;
+}
+
+/**
+ * Get popular tags ordered by bick_count
+ */
+export async function getPopularTags(
+  limit: number = 12
+): Promise<Array<{ id: string; name: string; slug: string; bick_count: number }>> {
+  const supabase = await createClient();
+  
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase.rpc as any)('get_popular_tags', {
+    result_limit: limit,
+  });
+
+  if (error) {
+    console.error('Popular tags error:', error);
+    return [];
+  }
+
+  return (data || []) as Array<{ id: string; name: string; slug: string; bick_count: number }>;
+}
+
+/**
+ * Update tags for a bick (uses RPC function)
+ */
+export async function updateBickTags(
+  bickId: string,
+  tagNames: string[]
+): Promise<Array<{ id: string; name: string; slug: string }>> {
+  const supabase = await createClient();
+  
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase.rpc as any)('update_bick_tags', {
+    p_bick_id: bickId,
+    p_tag_names: tagNames,
+  });
+
+  if (error) {
+    console.error('Update bick tags error:', error);
+    throw new Error('Failed to update tags');
+  }
+
+  return (data || []) as Array<{ id: string; name: string; slug: string }>;
+}
+
+// ============================================================================
+// BICK QUERIES
+// ============================================================================
+
 /**
  * Bick with assets and owner profile
  */
 export interface BickWithOwner extends BickWithAssets {
   owner?: Profile | null;
+  tags?: Tag[];
 }
 
 /**
  * Fetch a single bick by slug and ID
  * Returns null if not found or not live
+ * Includes tags via separate query for proper join
  */
 export async function getBickBySlugAndId(
   slug: string,
@@ -35,7 +137,15 @@ export async function getBickBySlugAndId(
     .single();
 
   if (error || !bick) return null;
-  return bick as BickWithOwner;
+  
+  // Fetch tags separately for cleaner join
+  const tags = await getBickTags(id);
+  
+  // Cast to proper type and add tags
+  const bickWithOwner = bick as unknown as BickWithOwner;
+  bickWithOwner.tags = tags as Tag[];
+  
+  return bickWithOwner;
 }
 
 /**

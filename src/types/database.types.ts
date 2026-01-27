@@ -299,6 +299,18 @@ export interface Database {
           assets: BickAsset[];
         }[];
       };
+      increment_play_count: {
+        Args: {
+          bick_id: string;
+        };
+        Returns: number;
+      };
+      increment_share_count: {
+        Args: {
+          bick_id: string;
+        };
+        Returns: number;
+      };
     };
     Enums: {
       bick_status: BickStatus;

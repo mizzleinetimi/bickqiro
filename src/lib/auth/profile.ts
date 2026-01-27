@@ -58,7 +58,8 @@ export async function createProfile(userId: string, email: string) {
   const username = await ensureUniqueUsername(baseUsername);
   const displayName = email.split('@')[0] || 'User';
 
-  const { data: profile, error } = await supabase
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: profile, error } = await (supabase as any)
     .from('profiles')
     .insert({
       id: userId,

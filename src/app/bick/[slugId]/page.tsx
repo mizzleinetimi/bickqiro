@@ -4,6 +4,8 @@ import { getBickBySlugAndId } from '@/lib/supabase/queries';
 import { parseSlugId } from '@/lib/utils/url';
 import { BickPlayer } from '@/components/bick/BickPlayer';
 import { BickJsonLd } from '@/components/bick/BickJsonLd';
+import { SharePanel } from '@/components/share/SharePanel';
+import { TagDisplay } from '@/components/tags/TagDisplay';
 
 interface BickPageProps {
   params: Promise<{ slugId: string }>;
@@ -59,6 +61,10 @@ export default async function BickPage({ params }: BickPageProps) {
   
   // Get owner display name
   const ownerName = bick.owner?.display_name || bick.owner?.username;
+  
+  // Construct canonical URL for sharing
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://bickqr.com';
+  const canonicalUrl = `${baseUrl}/bick/${bick.slug}-${bick.id}`;
 
   return (
     <div className="max-w-2xl mx-auto">
@@ -76,10 +82,26 @@ export default async function BickPage({ params }: BickPageProps) {
         <p className="text-gray-600 mb-6">{bick.description}</p>
       )}
       
+      {/* Tags display - show all tags on detail page */}
+      {bick.tags && bick.tags.length > 0 && (
+        <div className="mb-6">
+          <TagDisplay tags={bick.tags} size="md" />
+        </div>
+      )}
+      
       <BickPlayer 
         audioUrl={audioAsset?.cdn_url}
         title={bick.title}
         durationMs={bick.duration_ms}
+        bickId={bick.id}
+      />
+      
+      {/* Share Panel - positioned below player */}
+      <SharePanel
+        bickId={bick.id}
+        bickUrl={canonicalUrl}
+        bickTitle={bick.title}
+        className="mt-4"
       />
       
       <div className="mt-6 text-sm text-gray-500">

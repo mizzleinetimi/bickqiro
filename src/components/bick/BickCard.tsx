@@ -1,8 +1,9 @@
 import Link from 'next/link';
-import type { Bick } from '@/types/database.types';
+import type { Bick, Tag } from '@/types/database.types';
+import { TagDisplay } from '@/components/tags/TagDisplay';
 
 interface BickCardProps {
-  bick: Bick;
+  bick: Bick & { tags?: Tag[] };
 }
 
 function formatDuration(ms: number | null): string {
@@ -23,6 +24,14 @@ export function BickCard({ bick }: BickCardProps) {
       {bick.description && (
         <p className="mt-1 text-sm text-gray-600 line-clamp-2">{bick.description}</p>
       )}
+      
+      {/* Tags display - max 3 visible */}
+      {bick.tags && bick.tags.length > 0 && (
+        <div className="mt-2" onClick={(e) => e.stopPropagation()}>
+          <TagDisplay tags={bick.tags} maxVisible={3} size="sm" />
+        </div>
+      )}
+      
       <div className="mt-2 flex items-center gap-3 text-xs text-gray-500">
         <span>{formatDuration(bick.duration_ms)}</span>
         <span>{bick.play_count.toLocaleString()} plays</span>

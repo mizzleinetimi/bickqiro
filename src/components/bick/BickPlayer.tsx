@@ -1,12 +1,15 @@
 'use client';
 
 import { useRef, useState, useEffect } from 'react';
+import { useTrackingDebounce } from '@/hooks/useTrackingDebounce';
 
 interface BickPlayerProps {
   audioUrl?: string | null;
   title: string;
   durationMs?: number | null;
   minimal?: boolean;
+  /** Optional bick ID for play tracking. If provided, play events will be tracked. */
+  bickId?: string;
 }
 
 function formatDuration(ms: number | null | undefined): string {
@@ -23,12 +26,22 @@ function formatSeconds(secs: number): string {
   return `${mins}:${s.toString().padStart(2, '0')}`;
 }
 
-export function BickPlayer({ audioUrl, title, durationMs, minimal = false }: BickPlayerProps) {
+export function BickPlayer({ audioUrl, title, durationMs, minimal = false, bickId }: BickPlayerProps) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(durationMs ? durationMs / 1000 : 0);
   const [error, setError] = useState<string | null>(null);
+  
+  // Track whether this is the first play in this session (not a seek/resume)
+  const hasPlayedRef = useRef(false);
+  
+  // Play tracking hook - only active if bickId is provided
+  const { track: trackPlay } = useTrackingDebounce({
+    bickId: bickId || '',
+    eventType: 'play',
+    debounceMs: 30000, // 30-second debounce window
+  });
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -61,6 +74,13 @@ export function BickPlayer({ audioUrl, title, durationMs, minimal = false }: Bic
         audio.pause();
         setIsPlaying(false);
       } else {
+        // Track play event on first play (not seeks/resumes)
+        // Fire tracking before play to ensure it doesn't block playback
+        if (!hasPlayedRef.current && bickId) {
+          trackPlay();
+          hasPlayedRef.current = true;
+        }
+        
         await audio.play();
         setIsPlaying(true);
       }

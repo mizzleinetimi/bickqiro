@@ -20,7 +20,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <body className={inter.className} suppressHydrationWarning>
         <NavShell />
         <main className="mx-auto max-w-7xl px-4 py-8">
           {children}
