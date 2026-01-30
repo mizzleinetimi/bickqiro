@@ -1,7 +1,10 @@
 [build]
 builder = "dockerfile"
 dockerfilePath = "worker/Dockerfile"
+watchPatterns = ["worker/**"]
 
 [deploy]
 restartPolicyType = "on_failure"
 restartPolicyMaxRetries = 10
+healthcheckPath = "/health"
+healthcheckTimeout = 30
