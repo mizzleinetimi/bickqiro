@@ -35,15 +35,20 @@ export function TrendingResults({ initialBicks, initialCursor }: TrendingResults
 
   if (bicks.length === 0) {
     return (
-      <div className="text-center py-12">
-        <p className="text-gray-500">No trending sounds yet.</p>
+      <div className="text-center py-16">
+        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[#1e1e1e] flex items-center justify-center">
+          <svg className="w-8 h-8 text-[#a0a0a0]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+          </svg>
+        </div>
+        <p className="text-[#a0a0a0] text-lg">No trending sounds yet.</p>
       </div>
     );
   }
 
   return (
     <div>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {bicks.map((bick) => (
           <BickCard key={bick.id} bick={bick} />
         ))}
@@ -54,7 +59,7 @@ export function TrendingResults({ initialBicks, initialCursor }: TrendingResults
           <button
             onClick={loadMore}
             disabled={loading}
-            className="px-6 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition-colors disabled:opacity-50"
+            className="px-6 py-3 bg-[#1e1e1e] hover:bg-[#2a2a2a] text-[#f5f5f5] rounded-full font-medium border border-[#2a2a2a] transition-colors disabled:opacity-50"
           >
             {loading ? 'Loading...' : 'Load More'}
           </button>

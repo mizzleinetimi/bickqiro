@@ -59,12 +59,9 @@ export default async function BickPage({ params }: BickPageProps) {
   const audioAsset = bick.assets?.find(a => a.asset_type === 'audio' || a.asset_type === 'original');
   const ogImage = bick.assets?.find(a => a.asset_type === 'og_image');
   const teaser = bick.assets?.find(a => a.asset_type === 'teaser_mp4');
-  const waveform = bick.assets?.find(a => a.asset_type === 'waveform_json');
   
-  // Get owner display name
   const ownerName = bick.owner?.display_name || bick.owner?.username;
   
-  // Construct canonical URL for sharing
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://bickqr.com';
   const canonicalUrl = `${baseUrl}/bick/${bick.slug}-${bick.id}`;
 
@@ -72,44 +69,48 @@ export default async function BickPage({ params }: BickPageProps) {
     <div className="max-w-2xl mx-auto">
       <BickJsonLd bick={bick} audioUrl={audioAsset?.cdn_url} ogImageUrl={ogImage?.cdn_url} />
       
-      <h1 className="text-3xl font-bold mb-2">{bick.title}</h1>
+      <h1 className="text-3xl font-bold text-[#f5f5f5] mb-2">{bick.title}</h1>
       
       {ownerName && (
-        <p className="text-sm text-gray-500 mb-4">
-          by <span className="font-medium text-gray-700">{ownerName}</span>
+        <p className="text-sm text-[#a0a0a0] mb-4">
+          by <span className="font-medium text-[#FCD34D]">{ownerName}</span>
         </p>
       )}
       
       {bick.description && (
-        <p className="text-gray-600 mb-6">{bick.description}</p>
+        <p className="text-[#a0a0a0] mb-6">{bick.description}</p>
       )}
       
-      {/* Tags display - show all tags on detail page */}
+      {/* Tags display */}
       {bick.tags && bick.tags.length > 0 && (
         <div className="mb-6">
-          <TagDisplay tags={bick.tags} size="md" />
+          <TagDisplay tags={bick.tags} size="md" showAll />
         </div>
       )}
       
-      <BickPlayer 
-        audioUrl={audioAsset?.cdn_url}
-        title={bick.title}
-        durationMs={bick.duration_ms}
-        bickId={bick.id}
-      />
-      
-      {/* Action Buttons - Download and Share */}
-      <div className="flex flex-wrap items-center gap-3 mt-6">
-        <DownloadButton
+      {/* Player Card */}
+      <div className="bg-[#1e1e1e] rounded-xl border border-[#2a2a2a] p-6">
+        <BickPlayer 
           audioUrl={audioAsset?.cdn_url}
-          videoUrl={teaser?.cdn_url}
           title={bick.title}
+          durationMs={bick.duration_ms}
+          bickId={bick.id}
         />
-        <UniversalShareButton
-          url={canonicalUrl}
-          title={bick.title}
-          text={bick.description || undefined}
-        />
+        
+        {/* Action Buttons */}
+        <div className="flex flex-wrap items-center gap-3 mt-6 pt-6 border-t border-[#2a2a2a]">
+          <DownloadButton
+            audioUrl={audioAsset?.cdn_url ?? undefined}
+            videoUrl={teaser?.cdn_url ?? undefined}
+            title={bick.title}
+          />
+          <UniversalShareButton
+            url={canonicalUrl}
+            title={bick.title}
+            text={bick.description || undefined}
+            videoUrl={teaser?.cdn_url ?? undefined}
+          />
+        </div>
       </div>
       
       {/* Additional Share Options */}
@@ -120,46 +121,20 @@ export default async function BickPage({ params }: BickPageProps) {
         className="mt-4"
       />
       
-      <div className="mt-6 text-sm text-gray-500">
-        <p>Plays: {bick.play_count.toLocaleString()}</p>
-        <p>Shares: {bick.share_count.toLocaleString()}</p>
-      </div>
-
-      {/* Asset URLs for testing/debugging */}
-      <div className="mt-8 p-4 bg-gray-100 rounded-lg text-xs font-mono space-y-2">
-        <p className="font-bold text-gray-700 mb-2">Generated Assets:</p>
-        {teaser?.cdn_url && (
-          <div>
-            <span className="text-gray-500">Teaser MP4:</span>
-            <a href={teaser.cdn_url} target="_blank" rel="noopener" className="ml-2 text-blue-600 hover:underline break-all">
-              {teaser.cdn_url}
-            </a>
-          </div>
-        )}
-        {ogImage?.cdn_url && (
-          <div>
-            <span className="text-gray-500">OG Image:</span>
-            <a href={ogImage.cdn_url} target="_blank" rel="noopener" className="ml-2 text-blue-600 hover:underline break-all">
-              {ogImage.cdn_url}
-            </a>
-          </div>
-        )}
-        {waveform?.cdn_url && (
-          <div>
-            <span className="text-gray-500">Waveform:</span>
-            <a href={waveform.cdn_url} target="_blank" rel="noopener" className="ml-2 text-blue-600 hover:underline break-all">
-              {waveform.cdn_url}
-            </a>
-          </div>
-        )}
-        {audioAsset?.cdn_url && (
-          <div>
-            <span className="text-gray-500">Audio:</span>
-            <a href={audioAsset.cdn_url} target="_blank" rel="noopener" className="ml-2 text-blue-600 hover:underline break-all">
-              {audioAsset.cdn_url}
-            </a>
-          </div>
-        )}
+      {/* Stats */}
+      <div className="mt-6 flex items-center gap-6 text-sm text-[#a0a0a0]">
+        <span className="flex items-center gap-2">
+          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+          </svg>
+          {bick.play_count.toLocaleString()} plays
+        </span>
+        <span className="flex items-center gap-2">
+          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/>
+          </svg>
+          {bick.share_count.toLocaleString()} shares
+        </span>
       </div>
     </div>
   );

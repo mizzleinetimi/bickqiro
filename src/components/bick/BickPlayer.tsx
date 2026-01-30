@@ -8,7 +8,6 @@ interface BickPlayerProps {
   title: string;
   durationMs?: number | null;
   minimal?: boolean;
-  /** Optional bick ID for play tracking. If provided, play events will be tracked. */
   bickId?: string;
 }
 
@@ -33,14 +32,12 @@ export function BickPlayer({ audioUrl, title, durationMs, minimal = false, bickI
   const [duration, setDuration] = useState(durationMs ? durationMs / 1000 : 0);
   const [error, setError] = useState<string | null>(null);
   
-  // Track whether this is the first play in this session (not a seek/resume)
   const hasPlayedRef = useRef(false);
   
-  // Play tracking hook - only active if bickId is provided
   const { track: trackPlay } = useTrackingDebounce({
     bickId: bickId || '',
     eventType: 'play',
-    debounceMs: 30000, // 30-second debounce window
+    debounceMs: 30000,
   });
 
   useEffect(() => {
@@ -74,8 +71,6 @@ export function BickPlayer({ audioUrl, title, durationMs, minimal = false, bickI
         audio.pause();
         setIsPlaying(false);
       } else {
-        // Track play event on first play (not seeks/resumes)
-        // Fire tracking before play to ensure it doesn't block playback
         if (!hasPlayedRef.current && bickId) {
           trackPlay();
           hasPlayedRef.current = true;
@@ -92,7 +87,7 @@ export function BickPlayer({ audioUrl, title, durationMs, minimal = false, bickI
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   return (
-    <div className={`${minimal ? 'bg-gray-900 text-white p-4' : 'bg-gray-100 p-6 rounded-lg'}`}>
+    <div className={`${minimal ? 'bg-[#141414] text-white p-4' : 'bg-[#141414] p-6 rounded-xl border border-[#262626]'}`}>
       {audioUrl && (
         <audio ref={audioRef} src={audioUrl} preload="metadata" />
       )}
@@ -101,33 +96,33 @@ export function BickPlayer({ audioUrl, title, durationMs, minimal = false, bickI
         <button
           onClick={togglePlay}
           disabled={!audioUrl}
-          className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors ${
-            minimal ? 'bg-white text-gray-900 hover:bg-gray-200' : 'bg-gray-900 text-white hover:bg-gray-700'
+          className={`w-14 h-14 rounded-full flex items-center justify-center transition-colors ${
+            'bg-[#EF4444] text-white hover:bg-[#DC2626]'
           } ${!audioUrl ? 'opacity-50 cursor-not-allowed' : ''}`}
           aria-label={isPlaying ? `Pause ${title}` : `Play ${title}`}
         >
           {isPlaying ? (
-            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+            <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
             </svg>
           ) : (
-            <svg className="w-5 h-5 ml-1" fill="currentColor" viewBox="0 0 20 20">
+            <svg className="w-6 h-6 ml-1" fill="currentColor" viewBox="0 0 20 20">
               <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
             </svg>
           )}
         </button>
         
         <div className="flex-1">
-          {!minimal && <p className="font-medium">{title}</p>}
+          {!minimal && <p className="font-medium text-white mb-2">{title}</p>}
           
-          <div className={`h-2 ${minimal ? 'bg-gray-700' : 'bg-gray-300'} rounded mt-1 overflow-hidden`}>
+          <div className="h-2 bg-[#262626] rounded-full overflow-hidden">
             <div 
-              className="h-full bg-blue-500 rounded transition-all duration-100" 
+              className="h-full bg-[#EF4444] rounded-full transition-all duration-100" 
               style={{ width: `${progress}%` }}
             />
           </div>
           
-          <div className={`flex justify-between text-xs mt-1 ${minimal ? 'text-gray-400' : 'text-gray-500'}`}>
+          <div className="flex justify-between text-xs mt-2 text-gray-500">
             <span>{formatSeconds(currentTime)}</span>
             <span>{duration > 0 ? formatSeconds(duration) : formatDuration(durationMs)}</span>
           </div>
@@ -135,13 +130,13 @@ export function BickPlayer({ audioUrl, title, durationMs, minimal = false, bickI
       </div>
       
       {error && (
-        <p className={`text-xs mt-2 ${minimal ? 'text-red-400' : 'text-red-500'}`}>
+        <p className="text-xs mt-2 text-red-400">
           {error}
         </p>
       )}
       
       {!audioUrl && !error && (
-        <p className={`text-xs mt-2 ${minimal ? 'text-gray-400' : 'text-gray-500'}`}>
+        <p className="text-xs mt-2 text-gray-500">
           Audio not available
         </p>
       )}

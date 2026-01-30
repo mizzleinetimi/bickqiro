@@ -4,6 +4,7 @@
  * UniversalShareButton Component
  * 
  * Uses the Web Share API to show the native share sheet on supported devices.
+ * Shares the MP4 video file directly along with the link when available.
  * Falls back to showing a modal with share options on unsupported browsers.
  */
 
@@ -16,6 +17,8 @@ export interface UniversalShareButtonProps {
   title: string;
   /** Optional description text */
   text?: string;
+  /** Optional MP4 video URL to share as a file */
+  videoUrl?: string;
   /** Callback when share is triggered (for tracking) */
   onShare?: () => void;
   /** Optional custom class name */
@@ -26,33 +29,64 @@ export function UniversalShareButton({
   url, 
   title, 
   text, 
+  videoUrl,
   onShare, 
   className = '' 
 }: UniversalShareButtonProps) {
   const [showFallback, setShowFallback] = useState(false);
   const [copyState, setCopyState] = useState<'idle' | 'copied'>('idle');
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleShare = useCallback(async () => {
     // Check if Web Share API is available
     if (navigator.share) {
       try {
-        await navigator.share({
+        setIsLoading(true);
+        
+        // Prepare share data
+        const shareData: ShareData = {
           title,
-          text: text || `Check out "${title}" on Bickqr`,
-          url,
-        });
+          text: text || `Check out "${title}" on Bickqr\n${url}`,
+        };
+
+        // If video URL is available and file sharing is supported, fetch and share the video
+        if (videoUrl && navigator.canShare) {
+          try {
+            const response = await fetch(videoUrl);
+            const blob = await response.blob();
+            const fileName = `${title.replace(/[^a-zA-Z0-9]/g, '_')}.mp4`;
+            const file = new File([blob], fileName, { type: 'video/mp4' });
+            
+            // Check if we can share files
+            if (navigator.canShare({ files: [file] })) {
+              shareData.files = [file];
+            }
+          } catch (error) {
+            console.warn('Could not fetch video for sharing:', error);
+            // Continue without the file
+          }
+        }
+
+        // If no files, include the URL in the share data
+        if (!shareData.files) {
+          shareData.url = url;
+        }
+
+        await navigator.share(shareData);
         onShare?.();
       } catch (error) {
         // User cancelled or share failed - that's okay
         if ((error as Error).name !== 'AbortError') {
           console.error('Share failed:', error);
         }
+      } finally {
+        setIsLoading(false);
       }
     } else {
       // Show fallback modal
       setShowFallback(true);
     }
-  }, [url, title, text, onShare]);
+  }, [url, title, text, videoUrl, onShare]);
 
   const handleCopyInFallback = useCallback(async () => {
     try {
@@ -75,25 +109,33 @@ export function UniversalShareButton({
       <button
         type="button"
         onClick={handleShare}
-        className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium bg-purple-600 text-white hover:bg-purple-700 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 ${className}`}
+        disabled={isLoading}
+        className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium bg-purple-600 text-white hover:bg-purple-700 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50 disabled:cursor-wait ${className}`}
         aria-label="Share this bick"
       >
-        {/* Share Icon */}
-        <svg
-          className="w-5 h-5"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          aria-hidden="true"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
-          />
-        </svg>
-        <span>Share</span>
+        {/* Share Icon or Loading Spinner */}
+        {isLoading ? (
+          <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+          </svg>
+        ) : (
+          <svg
+            className="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
+            />
+          </svg>
+        )}
+        <span>{isLoading ? 'Loading...' : 'Share'}</span>
       </button>
 
       {/* Fallback Modal for browsers without Web Share API */}

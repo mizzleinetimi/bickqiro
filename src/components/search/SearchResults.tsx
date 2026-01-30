@@ -36,16 +36,23 @@ export function SearchResults({ initialBicks, initialCursor, query }: SearchResu
 
   if (bicks.length === 0) {
     return (
-      <div className="text-center py-12">
-        <p className="text-gray-500">No results found for &quot;{query}&quot;</p>
-        <p className="text-sm text-gray-400 mt-2">Try different keywords</p>
+      <div className="text-center py-16">
+        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[#1e1e1e] flex items-center justify-center">
+          <svg className="w-8 h-8 text-[#a0a0a0]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <p className="text-[#a0a0a0] text-lg">No results found for &quot;{query}&quot;</p>
+        <p className="text-sm text-[#666666] mt-2">Try different keywords</p>
       </div>
     );
   }
 
   return (
     <div>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <p className="text-[#a0a0a0] mb-6">{bicks.length}+ results for &quot;{query}&quot;</p>
+      
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {bicks.map((bick) => (
           <BickCard key={bick.id} bick={bick} />
         ))}
@@ -56,7 +63,7 @@ export function SearchResults({ initialBicks, initialCursor, query }: SearchResu
           <button
             onClick={loadMore}
             disabled={loading}
-            className="px-6 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition-colors disabled:opacity-50"
+            className="px-6 py-3 bg-[#1e1e1e] hover:bg-[#2a2a2a] text-[#f5f5f5] rounded-full font-medium border border-[#2a2a2a] transition-colors disabled:opacity-50"
           >
             {loading ? 'Loading...' : 'Load More'}
           </button>

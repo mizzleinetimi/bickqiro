@@ -16,7 +16,6 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   const params = await searchParams;
   const query = params.q?.trim() || '';
   
-  // Fetch initial results if query is provided
   let initialBicks: Awaited<ReturnType<typeof searchBicks>>['bicks'] = [];
   let initialCursor: string | null = null;
   
@@ -27,24 +26,28 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-6">Search</h1>
-      
-      <div className="mb-8">
-        <SearchInput defaultValue={query} autoFocus={!query} />
-      </div>
-      
-      {query ? (
-        <SearchResults
-          initialBicks={initialBicks}
-          initialCursor={initialCursor}
-          query={query}
-        />
-      ) : (
-        <div className="text-center py-12">
-          <p className="text-gray-500">Enter a search term to find sounds</p>
+    <div className="min-h-screen bg-[#0a0a0a]">
+      <div className="max-w-6xl mx-auto px-4 py-12">
+        <h1 className="text-3xl font-bold text-white mb-8">
+          <span className="text-[#FCD34D]">Search</span> Sounds
+        </h1>
+        
+        <div className="mb-8 max-w-2xl">
+          <SearchInput defaultValue={query} autoFocus={!query} />
         </div>
-      )}
+        
+        {query ? (
+          <SearchResults
+            initialBicks={initialBicks}
+            initialCursor={initialCursor}
+            query={query}
+          />
+        ) : (
+          <div className="text-center py-16">
+            <p className="text-gray-500 text-lg">Enter a search term to find sounds</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

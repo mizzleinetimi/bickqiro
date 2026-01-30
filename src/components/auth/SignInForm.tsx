@@ -28,7 +28,6 @@ export function SignInForm({ redirectTo = '/' }: SignInFormProps) {
       setIsGoogleLoading(false);
       setError(result.error);
     } else if (result.url) {
-      // Redirect to Google OAuth
       window.location.href = result.url;
     }
   };
@@ -76,8 +75,8 @@ export function SignInForm({ redirectTo = '/' }: SignInFormProps) {
             />
           </svg>
         </div>
-        <h3 className="text-lg font-medium text-gray-900">Account created!</h3>
-        <p className="mt-2 text-sm text-gray-600">
+        <h3 className="text-lg font-medium text-[#f5f5f5]">Account created!</h3>
+        <p className="mt-2 text-sm text-[#a0a0a0]">
           Check your email to confirm your account, then sign in.
         </p>
         <button
@@ -87,7 +86,7 @@ export function SignInForm({ redirectTo = '/' }: SignInFormProps) {
             setMode('signin');
             setPassword('');
           }}
-          className="mt-4 text-sm text-indigo-600 hover:text-indigo-500"
+          className="mt-4 text-sm text-[#FCD34D] hover:text-[#FBBF24]"
         >
           Sign in now
         </button>
@@ -102,7 +101,7 @@ export function SignInForm({ redirectTo = '/' }: SignInFormProps) {
         type="button"
         onClick={handleGoogleSignIn}
         disabled={isGoogleLoading || isLoading}
-        className="w-full flex items-center justify-center gap-3 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+        className="w-full flex items-center justify-center gap-3 rounded-lg border border-[#333333] bg-[#1a1a1a] px-4 py-3 text-sm font-medium text-[#f5f5f5] hover:bg-[#252525] focus:outline-none focus:ring-2 focus:ring-[#FCD34D] focus:ring-offset-2 focus:ring-offset-[#1e1e1e] disabled:cursor-not-allowed disabled:opacity-50 transition-colors"
       >
         <svg className="h-5 w-5" viewBox="0 0 24 24">
           <path
@@ -127,16 +126,16 @@ export function SignInForm({ redirectTo = '/' }: SignInFormProps) {
 
       <div className="relative">
         <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-gray-300" />
+          <div className="w-full border-t border-[#333333]" />
         </div>
         <div className="relative flex justify-center text-sm">
-          <span className="bg-white px-2 text-gray-500">Or continue with email</span>
+          <span className="bg-[#1e1e1e] px-2 text-[#666666]">Or continue with email</span>
         </div>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="email" className="block text-sm font-medium text-[#a0a0a0]">
             Email address
           </label>
           <input
@@ -146,13 +145,13 @@ export function SignInForm({ redirectTo = '/' }: SignInFormProps) {
             onChange={(e) => setEmail(e.target.value)}
             required
             autoComplete="email"
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            className="mt-1 block w-full rounded-lg border border-[#333333] bg-[#1a1a1a] px-4 py-3 text-[#f5f5f5] placeholder-[#666666] focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[#FCD34D]"
             placeholder="you@example.com"
           />
         </div>
 
         <div>
-          <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="password" className="block text-sm font-medium text-[#a0a0a0]">
             Password
           </label>
           <input
@@ -163,24 +162,24 @@ export function SignInForm({ redirectTo = '/' }: SignInFormProps) {
             required
             autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
             minLength={6}
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            className="mt-1 block w-full rounded-lg border border-[#333333] bg-[#1a1a1a] px-4 py-3 text-[#f5f5f5] placeholder-[#666666] focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[#FCD34D]"
             placeholder="••••••••"
           />
           {mode === 'signup' && (
-            <p className="mt-1 text-xs text-gray-500">At least 6 characters</p>
+            <p className="mt-1 text-xs text-[#666666]">At least 6 characters</p>
           )}
         </div>
 
         {error && (
-          <div className="rounded-md bg-red-50 p-3">
-            <p className="text-sm text-red-700">{error}</p>
+          <div className="rounded-lg bg-red-500/10 border border-red-500/20 p-3">
+            <p className="text-sm text-red-400">{error}</p>
           </div>
         )}
 
         <button
           type="submit"
           disabled={isLoading || isGoogleLoading || !email || !password}
-          className="w-full rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+          className="w-full rounded-lg bg-[#EF4444] px-4 py-3 text-sm font-medium text-white hover:bg-[#DC2626] focus:outline-none focus:ring-2 focus:ring-[#EF4444] focus:ring-offset-2 focus:ring-offset-[#1e1e1e] disabled:cursor-not-allowed disabled:opacity-50 transition-colors"
         >
           {isLoading ? (mode === 'signup' ? 'Creating account...' : 'Signing in...') : (mode === 'signup' ? 'Create account' : 'Sign in')}
         </button>
@@ -192,7 +191,7 @@ export function SignInForm({ redirectTo = '/' }: SignInFormProps) {
               setMode(mode === 'signin' ? 'signup' : 'signin');
               setError(null);
             }}
-            className="text-sm text-indigo-600 hover:text-indigo-500"
+            className="text-sm text-[#FCD34D] hover:text-[#FBBF24]"
           >
             {mode === 'signin' ? "Don't have an account? Sign up" : 'Already have an account? Sign in'}
           </button>

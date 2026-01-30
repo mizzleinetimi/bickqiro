@@ -1,10 +1,5 @@
 /**
- * FileDropzone Component
- * 
- * Drag and drop file selection with validation for audio and video files.
- * Video files are automatically processed to extract their audio track.
- * 
- * **Validates: Requirements 1.1, 1.2, 1.3, 1.4**
+ * FileDropzone Component - Dark Theme
  */
 'use client';
 
@@ -19,11 +14,8 @@ import {
 import { extractAudioFromVideo } from '@/lib/audio/video-extractor';
 
 interface FileDropzoneProps {
-  /** Callback when a valid file is selected (audio file or extracted audio blob) */
   onFileSelect: (file: File | Blob, originalFileName?: string) => void;
-  /** Optional error callback */
   onError?: (error: string) => void;
-  /** Whether the dropzone is disabled */
   disabled?: boolean;
 }
 
@@ -37,18 +29,15 @@ export function FileDropzone({ onFileSelect, onError, disabled = false }: FileDr
     if (!isValidMimeType(file.type)) {
       return 'Unsupported file type. Please upload MP3, WAV, OGG, M4A, or a video file (MP4, WebM, MOV).';
     }
-    
     if (!isValidFileSize(file.size)) {
       const maxMB = MAX_FILE_SIZE / (1024 * 1024);
       return `File too large. Maximum size is ${maxMB}MB.`;
     }
-    
     return null;
   }, []);
 
   const handleFile = useCallback(async (file: File) => {
     const validationError = validateFile(file);
-    
     if (validationError) {
       setError(validationError);
       onError?.(validationError);
@@ -57,12 +46,10 @@ export function FileDropzone({ onFileSelect, onError, disabled = false }: FileDr
 
     setError(null);
 
-    // Check if it's a video file - extract audio
     if (isVideoMimeType(file.type)) {
       setIsProcessing(true);
       try {
         const result = await extractAudioFromVideo(file);
-        // Pass the extracted audio blob with original filename for reference
         onFileSelect(result.blob, file.name);
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Failed to extract audio from video';
@@ -72,7 +59,6 @@ export function FileDropzone({ onFileSelect, onError, disabled = false }: FileDr
         setIsProcessing(false);
       }
     } else {
-      // It's an audio file, pass directly
       onFileSelect(file);
     }
   }, [validateFile, onFileSelect, onError]);
@@ -80,9 +66,7 @@ export function FileDropzone({ onFileSelect, onError, disabled = false }: FileDr
   const handleDragEnter = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (!disabled) {
-      setIsDragging(true);
-    }
+    if (!disabled) setIsDragging(true);
   }, [disabled]);
 
   const handleDragLeave = useCallback((e: React.DragEvent) => {
@@ -100,28 +84,19 @@ export function FileDropzone({ onFileSelect, onError, disabled = false }: FileDr
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(false);
-
     if (disabled) return;
-
     const files = e.dataTransfer.files;
-    if (files.length > 0) {
-      handleFile(files[0]);
-    }
+    if (files.length > 0) handleFile(files[0]);
   }, [disabled, handleFile]);
 
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-    if (files && files.length > 0) {
-      handleFile(files[0]);
-    }
-    // Reset input so same file can be selected again
+    if (files && files.length > 0) handleFile(files[0]);
     e.target.value = '';
   }, [handleFile]);
 
   const handleClick = useCallback(() => {
-    if (!disabled && !isProcessing) {
-      inputRef.current?.click();
-    }
+    if (!disabled && !isProcessing) inputRef.current?.click();
   }, [disabled, isProcessing]);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
@@ -138,9 +113,7 @@ export function FileDropzone({ onFileSelect, onError, disabled = false }: FileDr
 
   return (
     <div className="space-y-2">
-      <label className="block text-sm font-medium text-gray-700">
-        Upload Audio or Video File
-      </label>
+      <label className="block text-sm font-medium text-gray-300">Upload Audio or Video File</label>
       
       <div
         role="button"
@@ -152,13 +125,10 @@ export function FileDropzone({ onFileSelect, onError, disabled = false }: FileDr
         onDragOver={handleDragOver}
         onDrop={handleDrop}
         className={`
-          relative border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors
-          ${isDragging 
-            ? 'border-indigo-500 bg-indigo-50' 
-            : 'border-gray-300 hover:border-indigo-400 hover:bg-gray-50'
-          }
+          relative border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors
+          ${isDragging ? 'border-[#EF4444] bg-[#EF4444]/10' : 'border-[#262626] hover:border-[#404040] hover:bg-[#1a1a1a]'}
           ${disabled || isProcessing ? 'opacity-50 cursor-not-allowed' : ''}
-          ${error ? 'border-red-300' : ''}
+          ${error ? 'border-red-500/50' : ''}
         `}
       >
         <input
@@ -172,52 +142,30 @@ export function FileDropzone({ onFileSelect, onError, disabled = false }: FileDr
         />
 
         <div className="space-y-3">
-          {/* Icon */}
           <div className={`mx-auto w-12 h-12 rounded-full flex items-center justify-center ${
-            isDragging ? 'bg-indigo-100' : isProcessing ? 'bg-yellow-100' : 'bg-gray-100'
+            isDragging ? 'bg-[#EF4444]/20' : isProcessing ? 'bg-[#FCD34D]/20' : 'bg-[#262626]'
           }`}>
             {isProcessing ? (
-              <svg className="animate-spin w-6 h-6 text-yellow-600" viewBox="0 0 24 24">
-                <circle 
-                  className="opacity-25" 
-                  cx="12" cy="12" r="10" 
-                  stroke="currentColor" 
-                  strokeWidth="4" 
-                  fill="none" 
-                />
-                <path 
-                  className="opacity-75" 
-                  fill="currentColor" 
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" 
-                />
+              <svg className="animate-spin w-6 h-6 text-[#FCD34D]" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
               </svg>
             ) : (
-              <svg 
-                className={`w-6 h-6 ${isDragging ? 'text-indigo-600' : 'text-gray-400'}`} 
-                fill="none" 
-                viewBox="0 0 24 24" 
-                stroke="currentColor"
-              >
-                <path 
-                  strokeLinecap="round" 
-                  strokeLinejoin="round" 
-                  strokeWidth={2} 
-                  d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" 
-                />
+              <svg className={`w-6 h-6 ${isDragging ? 'text-[#EF4444]' : 'text-gray-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
               </svg>
             )}
           </div>
 
-          {/* Text */}
           <div>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-400">
               {isProcessing ? (
-                <span className="text-yellow-600 font-medium">Extracting audio from video...</span>
+                <span className="text-[#FCD34D] font-medium">Extracting audio from video...</span>
               ) : isDragging ? (
-                <span className="text-indigo-600 font-medium">Drop your file here</span>
+                <span className="text-[#EF4444] font-medium">Drop your file here</span>
               ) : (
                 <>
-                  <span className="text-indigo-600 font-medium">Click to upload</span>
+                  <span className="text-[#EF4444] font-medium">Click to upload</span>
                   {' '}or drag and drop
                 </>
               )}
@@ -229,9 +177,7 @@ export function FileDropzone({ onFileSelect, onError, disabled = false }: FileDr
         </div>
       </div>
 
-      {error && (
-        <p className="text-sm text-red-600">{error}</p>
-      )}
+      {error && <p className="text-sm text-red-400">{error}</p>}
     </div>
   );
 }

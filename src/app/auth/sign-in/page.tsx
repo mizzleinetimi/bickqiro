@@ -17,21 +17,21 @@ export default function SignInPage() {
   const errorMessage = errorCode ? errorMessages[errorCode] : null;
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <Link href="/" className="flex justify-center">
-          <span className="text-2xl font-bold text-indigo-600">Bickqr</span>
+          <span className="text-3xl font-bold text-[#FCD34D]">Bickqr</span>
         </Link>
-        <h2 className="mt-6 text-center text-2xl font-bold text-gray-900">
+        <h2 className="mt-6 text-center text-2xl font-bold text-[#f5f5f5]">
           Sign in to your account
         </h2>
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+        <div className="bg-[#1e1e1e] py-8 px-4 border border-[#2a2a2a] sm:rounded-xl sm:px-10">
           {errorMessage && (
-            <div className="mb-4 rounded-md bg-red-50 p-3">
-              <p className="text-sm text-red-700">{errorMessage}</p>
+            <div className="mb-4 rounded-md bg-red-500/10 border border-red-500/20 p-3">
+              <p className="text-sm text-red-400">{errorMessage}</p>
             </div>
           )}
 

@@ -1,11 +1,5 @@
 /**
- * MetadataForm Component
- * 
- * Form for entering bick metadata: title, description, and tags.
- * Includes validation and character counts.
- * Uses TagInput with TagAutocomplete for tag suggestions.
- * 
- * **Validates: Requirements 5.1, 5.2, 5.3, 5.4, 5.5, 1.1, 1.2, 1.3, 1.7**
+ * MetadataForm Component - Dark Theme
  */
 'use client';
 
@@ -27,19 +21,12 @@ export interface UploadMetadata {
 }
 
 interface MetadataFormProps {
-  /** Initial values for the form */
   initialValues?: Partial<UploadMetadata>;
-  /** Callback when form is submitted with valid data */
   onSubmit: (metadata: UploadMetadata) => void;
-  /** Whether the form is in a loading/submitting state */
   isSubmitting?: boolean;
 }
 
-export function MetadataForm({ 
-  initialValues, 
-  onSubmit, 
-  isSubmitting = false 
-}: MetadataFormProps) {
+export function MetadataForm({ initialValues, onSubmit, isSubmitting = false }: MetadataFormProps) {
   const [title, setTitle] = useState(initialValues?.title || '');
   const [description, setDescription] = useState(initialValues?.description || '');
   const [tags, setTags] = useState<string[]>(initialValues?.tags || []);
@@ -49,22 +36,16 @@ export function MetadataForm({
     const newErrors: Record<string, string> = {};
 
     const titleValidation = validateTitle(title);
-    if (!titleValidation.valid) {
-      newErrors.title = titleValidation.error!;
-    }
+    if (!titleValidation.valid) newErrors.title = titleValidation.error!;
 
     if (description) {
       const descValidation = validateDescription(description);
-      if (!descValidation.valid) {
-        newErrors.description = descValidation.error!;
-      }
+      if (!descValidation.valid) newErrors.description = descValidation.error!;
     }
 
     if (tags.length > 0) {
       const tagsValidation = validateTags(tags);
-      if (!tagsValidation.valid) {
-        newErrors.tags = tagsValidation.error!;
-      }
+      if (!tagsValidation.valid) newErrors.tags = tagsValidation.error!;
     }
 
     setErrors(newErrors);
@@ -73,9 +54,7 @@ export function MetadataForm({
 
   const handleSubmit = useCallback((e: React.FormEvent) => {
     e.preventDefault();
-    
     if (!validateForm()) return;
-
     onSubmit({
       title: title.trim(),
       description: description.trim() || undefined,
@@ -85,7 +64,6 @@ export function MetadataForm({
 
   const handleTagsChange = useCallback((newTags: string[]) => {
     setTags(newTags);
-    // Clear tag errors when tags change
     setErrors(prev => {
       const { tags: _, ...rest } = prev;
       return rest;
@@ -94,10 +72,9 @@ export function MetadataForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Title */}
       <div>
-        <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
-          Title <span className="text-red-500">*</span>
+        <label htmlFor="title" className="block text-sm font-medium text-gray-300 mb-1">
+          Title <span className="text-[#EF4444]">*</span>
         </label>
         <input
           id="title"
@@ -107,26 +84,19 @@ export function MetadataForm({
           placeholder="Give your bick a catchy title"
           maxLength={TITLE_MAX_LENGTH}
           disabled={isSubmitting}
-          className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100 ${
-            errors.title ? 'border-red-500' : 'border-gray-300'
+          className={`w-full px-4 py-3 border rounded-lg bg-[#1a1a1a] text-white placeholder-gray-500 focus:ring-2 focus:ring-[#EF4444] focus:border-transparent disabled:opacity-50 transition-colors ${
+            errors.title ? 'border-red-500' : 'border-[#262626]'
           }`}
         />
         <div className="flex justify-between mt-1">
-          {errors.title ? (
-            <p className="text-sm text-red-600">{errors.title}</p>
-          ) : (
-            <span />
-          )}
-          <span className="text-xs text-gray-500">
-            {title.length}/{TITLE_MAX_LENGTH}
-          </span>
+          {errors.title ? <p className="text-sm text-red-400">{errors.title}</p> : <span />}
+          <span className="text-xs text-gray-500">{title.length}/{TITLE_MAX_LENGTH}</span>
         </div>
       </div>
 
-      {/* Description */}
       <div>
-        <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
-          Description <span className="text-gray-400">(optional)</span>
+        <label htmlFor="description" className="block text-sm font-medium text-gray-300 mb-1">
+          Description <span className="text-gray-500">(optional)</span>
         </label>
         <textarea
           id="description"
@@ -136,28 +106,20 @@ export function MetadataForm({
           maxLength={DESCRIPTION_MAX_LENGTH}
           rows={3}
           disabled={isSubmitting}
-          className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100 resize-none ${
-            errors.description ? 'border-red-500' : 'border-gray-300'
+          className={`w-full px-4 py-3 border rounded-lg bg-[#1a1a1a] text-white placeholder-gray-500 focus:ring-2 focus:ring-[#EF4444] focus:border-transparent disabled:opacity-50 resize-none transition-colors ${
+            errors.description ? 'border-red-500' : 'border-[#262626]'
           }`}
         />
         <div className="flex justify-between mt-1">
-          {errors.description ? (
-            <p className="text-sm text-red-600">{errors.description}</p>
-          ) : (
-            <span />
-          )}
-          <span className="text-xs text-gray-500">
-            {description.length}/{DESCRIPTION_MAX_LENGTH}
-          </span>
+          {errors.description ? <p className="text-sm text-red-400">{errors.description}</p> : <span />}
+          <span className="text-xs text-gray-500">{description.length}/{DESCRIPTION_MAX_LENGTH}</span>
         </div>
       </div>
 
-      {/* Tags */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Tags <span className="text-gray-400">(optional)</span>
+        <label className="block text-sm font-medium text-gray-300 mb-1">
+          Tags <span className="text-gray-500">(optional)</span>
         </label>
-        
         <TagInput
           value={tags}
           onChange={handleTagsChange}
@@ -166,33 +128,19 @@ export function MetadataForm({
           placeholder="Add tags..."
           showAutocomplete
         />
-
-        {errors.tags && (
-          <p className="text-sm text-red-600 mt-1">{errors.tags}</p>
-        )}
+        {errors.tags && <p className="text-sm text-red-400 mt-1">{errors.tags}</p>}
       </div>
 
-      {/* Submit button */}
       <button
         type="submit"
         disabled={isSubmitting || !title.trim()}
-        className="w-full py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+        className="w-full py-3 bg-[#EF4444] text-white rounded-full hover:bg-[#DC2626] disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 font-medium"
       >
         {isSubmitting ? (
           <>
             <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-              <circle 
-                className="opacity-25" 
-                cx="12" cy="12" r="10" 
-                stroke="currentColor" 
-                strokeWidth="4" 
-                fill="none" 
-              />
-              <path 
-                className="opacity-75" 
-                fill="currentColor" 
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" 
-              />
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
             </svg>
             <span>Uploading...</span>
           </>

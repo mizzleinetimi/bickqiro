@@ -3,7 +3,7 @@
 /**
  * SharePanel Component
  * 
- * A container component that composes CopyLinkButton and social share buttons.
+ * A container component that composes CopyLinkButton.
  * Integrates share tracking with 60-second debounce.
  * 
  * @requirements 2.1, 2.2, 2.3
@@ -11,8 +11,6 @@
 
 import { useTrackingDebounce } from '@/hooks/useTrackingDebounce';
 import { CopyLinkButton } from './CopyLinkButton';
-import { TwitterShareButton } from './TwitterShareButton';
-import { FacebookShareButton } from './FacebookShareButton';
 
 export interface SharePanelProps {
   /** The ID of the bick being shared (for tracking) */
@@ -25,7 +23,7 @@ export interface SharePanelProps {
   className?: string;
 }
 
-export function SharePanel({ bickId, bickUrl, bickTitle, className = '' }: SharePanelProps) {
+export function SharePanel({ bickId, bickUrl, className = '' }: SharePanelProps) {
   // Share tracking hook with 60-second debounce
   const { track: trackShare } = useTrackingDebounce({
     bickId,
@@ -39,22 +37,11 @@ export function SharePanel({ bickId, bickUrl, bickTitle, className = '' }: Share
         url={bickUrl} 
         onCopy={trackShare}
       />
-      <TwitterShareButton 
-        url={bickUrl} 
-        title={bickTitle}
-        onShare={trackShare}
-      />
-      <FacebookShareButton 
-        url={bickUrl}
-        onShare={trackShare}
-      />
     </div>
   );
 }
 
 // Re-export sub-components for convenience
 export { CopyLinkButton } from './CopyLinkButton';
-export { TwitterShareButton } from './TwitterShareButton';
-export { FacebookShareButton } from './FacebookShareButton';
 export { DownloadButton } from './DownloadButton';
 export { UniversalShareButton } from './UniversalShareButton';

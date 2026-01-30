@@ -16,7 +16,6 @@ export function UserMenu({ user }: UserMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  // Close menu when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
@@ -39,16 +38,16 @@ export function UserMenu({ user }: UserMenuProps) {
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
+        className="flex items-center gap-2 rounded-full px-3 py-2 text-sm text-[#a0a0a0] hover:text-[#f5f5f5] hover:bg-[#1e1e1e] transition-colors"
       >
         {user.avatarUrl ? (
           <img
             src={user.avatarUrl}
             alt=""
-            className="h-6 w-6 rounded-full"
+            className="h-7 w-7 rounded-full"
           />
         ) : (
-          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-indigo-100 text-xs font-medium text-indigo-600">
+          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#FCD34D] text-xs font-medium text-[#121212]">
             {displayText.charAt(0).toUpperCase()}
           </div>
         )}
@@ -64,15 +63,15 @@ export function UserMenu({ user }: UserMenuProps) {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-48 rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5">
-          <div className="border-b border-gray-100 px-4 py-2">
-            <p className="text-sm font-medium text-gray-900">{displayText}</p>
-            <p className="truncate text-xs text-gray-500">{user.email}</p>
+        <div className="absolute right-0 mt-2 w-48 rounded-xl bg-[#1e1e1e] py-1 border border-[#2a2a2a] shadow-lg">
+          <div className="border-b border-[#2a2a2a] px-4 py-3">
+            <p className="text-sm font-medium text-[#f5f5f5]">{displayText}</p>
+            <p className="truncate text-xs text-[#666666]">{user.email}</p>
           </div>
           
           <Link
             href="/my-bicks"
-            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+            className="block px-4 py-2 text-sm text-[#a0a0a0] hover:text-[#f5f5f5] hover:bg-[#252525] transition-colors"
             onClick={() => setIsOpen(false)}
           >
             My Bicks
@@ -81,7 +80,7 @@ export function UserMenu({ user }: UserMenuProps) {
           <button
             type="button"
             onClick={handleSignOut}
-            className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
+            className="block w-full px-4 py-2 text-left text-sm text-[#a0a0a0] hover:text-[#f5f5f5] hover:bg-[#252525] transition-colors"
           >
             Sign Out
           </button>

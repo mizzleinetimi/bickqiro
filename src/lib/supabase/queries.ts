@@ -311,6 +311,27 @@ export async function getTrendingBicks(limit: number = 10): Promise<Bick[]> {
   return bicks as Bick[];
 }
 
+/**
+ * Fetch latest bicks for homepage
+ * Returns most recently published live bicks
+ */
+export async function getLatestBicks(limit: number = 12): Promise<BickWithAssets[]> {
+  const supabase = await createClient();
+  
+  const { data: bicks, error } = await supabase
+    .from('bicks')
+    .select(`
+      *,
+      assets:bick_assets(*)
+    `)
+    .eq('status', 'live')
+    .order('published_at', { ascending: false })
+    .limit(limit);
+
+  if (error || !bicks) return [];
+  return bicks as BickWithAssets[];
+}
+
 
 // ============================================================================
 // SEARCH & TRENDING QUERIES

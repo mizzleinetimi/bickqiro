@@ -1,51 +1,76 @@
 import Link from 'next/link';
-import { getTopTrendingBicks } from '@/lib/supabase/queries';
+import { getTopTrendingBicks, getLatestBicks } from '@/lib/supabase/queries';
 import { BickCard } from '@/components/bick/BickCard';
 import { SearchInput } from '@/components/search';
 import { PopularTags } from '@/components/tags/PopularTags';
 
 export default async function HomePage() {
-  const bicks = await getTopTrendingBicks(6);
+  const trendingBicks = await getTopTrendingBicks(12);
+  const latestBicks = await getLatestBicks(12);
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      <div className="text-center mb-12">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Bickqr</h1>
-        <p className="text-gray-600 mb-8 text-lg">
-          Discover and share short audio clips.
-        </p>
-        
-        <div className="max-w-xl mx-auto">
-          <SearchInput placeholder="Search for sounds..." />
+    <div className="min-h-screen bg-[#0a0a0a]">
+      <div className="max-w-6xl mx-auto px-4 py-12">
+        {/* Hero Section */}
+        <div className="text-center mb-12">
+          <h1 className="text-4xl md:text-5xl font-bold mb-4">
+            <span className="text-white">Explore </span>
+            <span className="text-[#FCD34D]">Bicks</span>
+          </h1>
+          
+          <div className="max-w-2xl mx-auto mt-8">
+            <SearchInput placeholder="Search for sounds..." />
+          </div>
         </div>
-      </div>
-      
-      <section>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold">Trending Sounds</h2>
-          <Link 
-            href="/trending" 
-            className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+        
+        {/* Tabs */}
+        <div className="flex items-center gap-2 mb-8">
+          <Link
+            href="/"
+            className="px-4 py-2 rounded-full bg-[#EF4444] text-white text-sm font-medium"
           >
-            View all →
+            Latest
+          </Link>
+          <Link
+            href="/trending"
+            className="px-4 py-2 rounded-full bg-[#1a1a1a] text-gray-400 hover:text-white text-sm font-medium transition-colors"
+          >
+            Trending
           </Link>
         </div>
         
-        {bicks.length > 0 ? (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {bicks.map((bick) => (
+        {/* Bicks Grid */}
+        {latestBicks.length > 0 ? (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {latestBicks.map((bick) => (
+              <BickCard key={bick.id} bick={bick} />
+            ))}
+          </div>
+        ) : trendingBicks.length > 0 ? (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {trendingBicks.map((bick) => (
               <BickCard key={bick.id} bick={bick} />
             ))}
           </div>
         ) : (
-          <p className="text-gray-500 text-center py-8">
-            No sounds yet. Be the first to upload!
-          </p>
+          <div className="text-center py-16">
+            <p className="text-gray-500 text-lg">
+              No sounds yet. Be the first to upload!
+            </p>
+            <Link
+              href="/upload"
+              className="inline-block mt-4 px-6 py-3 rounded-full bg-[#EF4444] text-white font-medium hover:bg-[#DC2626] transition-colors"
+            >
+              Upload a Bick
+            </Link>
+          </div>
         )}
-      </section>
-      
-      {/* Popular Tags Section */}
-      <PopularTags limit={12} title="Popular Tags" />
+        
+        {/* Popular Tags Section */}
+        <div className="mt-12">
+          <PopularTags limit={12} title="Popular Tags" />
+        </div>
+      </div>
     </div>
   );
 }
