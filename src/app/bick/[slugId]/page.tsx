@@ -5,6 +5,8 @@ import { parseSlugId } from '@/lib/utils/url';
 import { BickPlayer } from '@/components/bick/BickPlayer';
 import { BickJsonLd } from '@/components/bick/BickJsonLd';
 import { SharePanel } from '@/components/share/SharePanel';
+import { DownloadButton } from '@/components/share/DownloadButton';
+import { UniversalShareButton } from '@/components/share/UniversalShareButton';
 import { TagDisplay } from '@/components/tags/TagDisplay';
 
 interface BickPageProps {
@@ -96,7 +98,21 @@ export default async function BickPage({ params }: BickPageProps) {
         bickId={bick.id}
       />
       
-      {/* Share Panel - positioned below player */}
+      {/* Action Buttons - Download and Share */}
+      <div className="flex flex-wrap items-center gap-3 mt-6">
+        <DownloadButton
+          audioUrl={audioAsset?.cdn_url}
+          videoUrl={teaser?.cdn_url}
+          title={bick.title}
+        />
+        <UniversalShareButton
+          url={canonicalUrl}
+          title={bick.title}
+          text={bick.description || undefined}
+        />
+      </div>
+      
+      {/* Additional Share Options */}
       <SharePanel
         bickId={bick.id}
         bickUrl={canonicalUrl}

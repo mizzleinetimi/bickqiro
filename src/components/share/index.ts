@@ -15,3 +15,9 @@ export type { TwitterShareButtonProps } from './TwitterShareButton';
 
 export { FacebookShareButton, generateFacebookShareUrl } from './FacebookShareButton';
 export type { FacebookShareButtonProps } from './FacebookShareButton';
+
+export { DownloadButton } from './DownloadButton';
+export type { DownloadButtonProps } from './DownloadButton';
+
+export { UniversalShareButton } from './UniversalShareButton';
+export type { UniversalShareButtonProps } from './UniversalShareButton';

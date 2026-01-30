@@ -56,3 +56,5 @@ export function SharePanel({ bickId, bickUrl, bickTitle, className = '' }: Share
 export { CopyLinkButton } from './CopyLinkButton';
 export { TwitterShareButton } from './TwitterShareButton';
 export { FacebookShareButton } from './FacebookShareButton';
+export { DownloadButton } from './DownloadButton';
+export { UniversalShareButton } from './UniversalShareButton';
