@@ -59,7 +59,7 @@ async function extractAudio(url: string): Promise<ExtractionResponse> {
 
     try {
       console.log(`[API] Fetching video info for: ${url}`);
-      const { stdout, stderr } = await execAsync(`yt-dlp --dump-json "${url}"`, { timeout: 60000 });
+      const { stdout, stderr } = await execAsync(`yt-dlp --impersonate chrome --dump-json "${url}"`, { timeout: 60000 });
       const infoJson = JSON.parse(stdout);
       title = infoJson.title;
       durationMs = Math.round((infoJson.duration || 0) * 1000);
@@ -78,9 +78,9 @@ async function extractAudio(url: string): Promise<ExtractionResponse> {
     try {
       console.log(`[API] Extracting audio to: ${outputPath}`);
       // Use --no-playlist to avoid downloading playlists
-      // Use -f bestaudio to get best audio quality
-      // Use --extract-audio to extract audio only
-      const cmd = `yt-dlp --no-playlist -f bestaudio -x --audio-format mp3 --audio-quality 0 -o "${outputPath}" "${url}"`;
+      // Use --impersonate for TikTok bot detection bypass (requires curl_cffi)
+      // Don't specify format - let yt-dlp pick best available, then extract audio
+      const cmd = `yt-dlp --no-playlist --impersonate chrome -x --audio-format mp3 --audio-quality 0 -o "${outputPath}" "${url}"`;
       console.log(`[API] Running: ${cmd}`);
       const { stdout, stderr } = await execAsync(cmd, { timeout: 120000 });
       if (stdout) console.log(`[API] yt-dlp stdout: ${stdout}`);
