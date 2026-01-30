@@ -31,3 +31,4 @@ RUN npm install tsx dotenv 2>/dev/null || true
 
 # Run the worker
 CMD ["npx", "tsx", "worker/index.ts"]
+# Trigger redeploy Fri Jan 30 21:03:06 WAT 2026
