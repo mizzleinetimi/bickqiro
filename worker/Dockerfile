@@ -15,8 +15,8 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm ci --only=production
+# Install dependencies (including all deps needed for worker)
+RUN npm ci
 
 # Copy source files
 COPY tsconfig.json ./
@@ -24,8 +24,8 @@ COPY src/types ./src/types
 COPY src/lib/queue ./src/lib/queue
 COPY worker ./worker
 
-# Install dev dependencies for tsx
-RUN npm install tsx dotenv
+# Install dev dependencies for tsx (if not already installed)
+RUN npm install tsx dotenv 2>/dev/null || true
 
 # Run the worker
 CMD ["npx", "tsx", "worker/index.ts"]
