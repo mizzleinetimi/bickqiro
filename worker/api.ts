@@ -67,34 +67,75 @@ async function extractAudio(url: string): Promise<ExtractionResponse> {
       return { success: false, error: 'Failed to fetch video information', code: 'EXTRACTION_FAILED' };
     }
 
-    // Extract audio - use template without extension, yt-dlp adds it
+    // Extract audio - download and convert to mp3
     try {
       console.log(`[API] Extracting audio to: ${outputPath}`);
-      const { stdout, stderr } = await execAsync(
-        `yt-dlp -x --audio-format mp3 --audio-quality 0 -o "${outputTemplate}.%(ext)s" "${url}"`,
-        { timeout: 120000 }
-      );
-      console.log(`[API] yt-dlp stdout: ${stdout}`);
+      // Use --no-playlist to avoid downloading playlists
+      // Use -f bestaudio to get best audio quality
+      // Use --extract-audio to extract audio only
+      const cmd = `yt-dlp --no-playlist -f bestaudio -x --audio-format mp3 --audio-quality 0 -o "${outputPath}" "${url}"`;
+      console.log(`[API] Running: ${cmd}`);
+      const { stdout, stderr } = await execAsync(cmd, { timeout: 120000 });
+      if (stdout) console.log(`[API] yt-dlp stdout: ${stdout}`);
       if (stderr) console.log(`[API] yt-dlp stderr: ${stderr}`);
-    } catch (error) {
+    } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       console.error(`[API] Failed to extract audio: ${errorMessage}`);
+      // Check if error has stderr
+      const execError = error as { stderr?: string };
+      if (execError.stderr) {
+        console.error(`[API] yt-dlp stderr: ${execError.stderr}`);
+      }
       return { success: false, error: 'Failed to extract audio', code: 'EXTRACTION_FAILED' };
     }
 
-    // Check if file exists
-    let audioBuffer: Buffer;
-    try {
-      audioBuffer = await readFile(outputPath);
-      console.log(`[API] Audio file size: ${audioBuffer.length} bytes`);
-    } catch (error) {
-      console.error(`[API] Audio file not found at ${outputPath}`);
-      // Try to find any mp3 file with our tempId
+    // Check if file exists - try multiple possible extensions
+    let audioBuffer: Buffer | null = null;
+    let actualPath = outputPath;
+    
+    // yt-dlp might output with different extensions depending on source
+    const possiblePaths = [
+      outputPath,
+      `${outputTemplate}.mp3`,
+      `${outputTemplate}.m4a`,
+      `${outputTemplate}.webm`,
+      `${outputTemplate}.opus`,
+    ];
+    
+    for (const path of possiblePaths) {
       try {
-        const { stdout } = await execAsync(`ls -la /tmp/${tempId}*`);
-        console.log(`[API] Files in /tmp: ${stdout}`);
+        audioBuffer = await readFile(path);
+        actualPath = path;
+        console.log(`[API] Found audio file at: ${path}, size: ${audioBuffer.length} bytes`);
+        break;
+      } catch {
+        // Try next path
+      }
+    }
+    
+    if (!audioBuffer) {
+      console.error(`[API] Audio file not found at any expected path`);
+      // List all files with our tempId to debug
+      try {
+        const { stdout } = await execAsync(`ls -la /tmp/ | grep ${tempId} || echo "No files found"`);
+        console.log(`[API] Files in /tmp matching ${tempId}: ${stdout}`);
       } catch {}
       return { success: false, error: 'Audio file not created', code: 'EXTRACTION_FAILED' };
+    }
+    
+    // If not mp3, we need to convert it
+    if (!actualPath.endsWith('.mp3')) {
+      console.log(`[API] Converting ${actualPath} to mp3...`);
+      try {
+        await execAsync(`ffmpeg -i "${actualPath}" -acodec libmp3lame -q:a 2 "${outputPath}" -y`, { timeout: 60000 });
+        audioBuffer = await readFile(outputPath);
+        // Clean up the original non-mp3 file
+        await unlink(actualPath).catch(() => {});
+        console.log(`[API] Converted to mp3, size: ${audioBuffer.length} bytes`);
+      } catch (convError) {
+        console.error(`[API] FFmpeg conversion failed:`, convError);
+        // Use the original file anyway
+      }
     }
 
     // Upload to R2
