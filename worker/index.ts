@@ -100,4 +100,10 @@ console.log('[Worker] Bick processing worker started');
 console.log('[Worker] FFmpeg asset generation enabled');
 
 // Start the HTTP API server for URL extraction
-startApiServer();
+console.log('[Worker] About to start API server...');
+try {
+  startApiServer();
+  console.log('[Worker] API server start called');
+} catch (err) {
+  console.error('[Worker] Failed to start API server:', err);
+}
