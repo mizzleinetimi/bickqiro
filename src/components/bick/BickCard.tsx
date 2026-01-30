@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import type { Bick, Tag, BickAsset } from '@/types/database.types';
 import { TagDisplay } from '@/components/tags/TagDisplay';
-import { Download } from 'lucide-react';
+import { Bookmark, Share2 } from 'lucide-react';
 
 interface BickCardProps {
   bick: Bick & { tags?: Tag[]; assets?: BickAsset[]; owner?: { username?: string; display_name?: string | null } | null };
@@ -35,7 +35,17 @@ export function BickCard({ bick, variant = 'default', showTrending = false }: Bi
   const isFeatured = variant === 'featured';
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [isSaved, setIsSaved] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Check if bick is saved on mount
+  useEffect(() => {
+    fetch(`/api/bicks/${bick.id}/save`)
+      .then(res => res.json())
+      .then(data => setIsSaved(data.saved))
+      .catch(() => {});
+  }, [bick.id]);
   
   // Get audio URL from assets - check both 'audio' and 'original' types
   const audioAsset = bick.assets?.find(a => a.asset_type === 'audio' || a.asset_type === 'original');
@@ -45,9 +55,7 @@ export function BickCard({ bick, variant = 'default', showTrending = false }: Bi
   const thumbnailAsset = bick.assets?.find(a => a.asset_type === 'thumbnail');
   const ogImageAsset = bick.assets?.find(a => a.asset_type === 'og_image');
   const thumbnailUrl = thumbnailAsset?.cdn_url || ogImageAsset?.cdn_url || DEFAULT_THUMBNAIL;
-  
-  // Get owner display name
-  const ownerName = bick.owner?.display_name || bick.owner?.username || 'Anonymous';
+  const isDefaultThumbnail = thumbnailUrl === DEFAULT_THUMBNAIL;
 
   // Handle audio time updates
   useEffect(() => {
@@ -115,16 +123,52 @@ export function BickCard({ bick, variant = 'default', showTrending = false }: Bi
     }
   };
 
-  const handleDownloadClick = (e: React.MouseEvent) => {
+  const handleSaveClick = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!audioUrl) return;
+    if (isSaving) return;
     
-    const link = document.createElement('a');
-    link.href = audioUrl;
-    link.download = `${bick.slug}.mp3`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const newSavedState = !isSaved;
+    setIsSaved(newSavedState);
+    setIsSaving(true);
+
+    try {
+      const response = await fetch(`/api/bicks/${bick.id}/save`, {
+        method: newSavedState ? 'POST' : 'DELETE',
+      });
+      
+      if (!response.ok) {
+        // Revert on error
+        setIsSaved(!newSavedState);
+      }
+    } catch {
+      // Revert on error
+      setIsSaved(!newSavedState);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleShareClick = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const shareUrl = `${window.location.origin}/bick/${bick.slug}-${bick.id}`;
+    
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: bick.title,
+          text: bick.description || `Check out "${bick.title}" on Bickqr`,
+          url: shareUrl,
+        });
+      } catch (err) {
+        // User cancelled or share failed, fallback to clipboard
+        if ((err as Error).name !== 'AbortError') {
+          await navigator.clipboard.writeText(shareUrl);
+        }
+      }
+    } else {
+      // Fallback: copy to clipboard
+      await navigator.clipboard.writeText(shareUrl);
+    }
   };
 
   return (
@@ -148,12 +192,12 @@ export function BickCard({ bick, variant = 'default', showTrending = false }: Bi
       )}
 
       {/* Thumbnail with Play Button Overlay */}
-      <div className="relative flex-shrink-0 w-20 h-20 sm:w-24 sm:h-24 rounded-lg overflow-hidden bg-gray-800">
+      <div className={`relative flex-shrink-0 w-20 h-20 sm:w-24 sm:h-24 rounded-lg overflow-hidden ${isDefaultThumbnail ? 'bg-[#1a1a1a]' : 'bg-gray-800'}`}>
         <Image
           src={thumbnailUrl}
           alt={bick.title}
           fill
-          className="object-cover"
+          className={isDefaultThumbnail ? "object-contain p-2" : "object-cover"}
           sizes="(max-width: 640px) 80px, 96px"
         />
         
@@ -198,14 +242,37 @@ export function BickCard({ bick, variant = 'default', showTrending = false }: Bi
 
       {/* Content */}
       <div className="flex-1 min-w-0 flex flex-col justify-between">
-        {/* Top: Title & Username */}
-        <div>
-          <h3 className="font-semibold text-white text-sm sm:text-base leading-tight line-clamp-2 group-hover:text-brand-primary transition-colors">
-            {bick.title}
-          </h3>
-          <p className="text-xs text-gray-400 mt-1 truncate">
-            {ownerName}
-          </p>
+        {/* Top: Title, Username & Action Buttons */}
+        <div className="flex justify-between items-start gap-2">
+          <div className="min-w-0 flex-1">
+            <h3 className="font-semibold text-white text-sm sm:text-base leading-tight line-clamp-2 group-hover:text-brand-primary transition-colors">
+              {bick.title}
+            </h3>
+          </div>
+          
+          {/* Share & Save Buttons */}
+          <div className="flex flex-col gap-1 flex-shrink-0 -mt-1 -mr-1">
+            <button
+              type="button"
+              onClick={handleShareClick}
+              className="p-1.5 text-gray-400 hover:text-white hover:bg-gray-700 rounded-full transition-colors"
+              aria-label="Share"
+            >
+              <Share2 className="w-4 h-4" />
+            </button>
+            <button
+              type="button"
+              onClick={handleSaveClick}
+              className={`p-1.5 rounded-full transition-colors ${
+                isSaved 
+                  ? 'text-brand-accent bg-brand-accent/20' 
+                  : 'text-gray-400 hover:text-white hover:bg-gray-700'
+              }`}
+              aria-label={isSaved ? 'Unsave' : 'Save'}
+            >
+              <Bookmark className="w-4 h-4" fill={isSaved ? 'currentColor' : 'none'} />
+            </button>
+          </div>
         </div>
 
         {/* Tags (if any) */}
@@ -215,39 +282,26 @@ export function BickCard({ bick, variant = 'default', showTrending = false }: Bi
           </div>
         )}
 
-        {/* Bottom: Stats & Actions */}
-        <div className="flex items-center justify-between mt-2">
-          <div className="flex items-center gap-3 text-xs text-gray-500">
-            {/* Play Count */}
-            <span className="flex items-center gap-1">
-              <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
-              </svg>
-              {formatPlayCount(bick.play_count)}
-            </span>
+        {/* Bottom: Stats */}
+        <div className="flex items-center gap-3 text-xs text-gray-500">
+          {/* Play Count */}
+          <span className="flex items-center gap-1">
+            <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
+            </svg>
+            {formatPlayCount(bick.play_count)}
+          </span>
 
-            {/* Playing indicator */}
-            {isPlaying && (
-              <span className="flex items-center gap-1 text-brand-accent">
-                <span className="flex gap-0.5">
-                  <span className="w-0.5 h-2.5 bg-brand-accent rounded-full animate-pulse" />
-                  <span className="w-0.5 h-2.5 bg-brand-accent rounded-full animate-pulse" style={{ animationDelay: '0.2s' }} />
-                  <span className="w-0.5 h-2.5 bg-brand-accent rounded-full animate-pulse" style={{ animationDelay: '0.4s' }} />
-                </span>
+          {/* Playing indicator */}
+          {isPlaying && (
+            <span className="flex items-center gap-1 text-brand-accent">
+              <span className="flex gap-0.5">
+                <span className="w-0.5 h-2.5 bg-brand-accent rounded-full animate-pulse" />
+                <span className="w-0.5 h-2.5 bg-brand-accent rounded-full animate-pulse" style={{ animationDelay: '0.2s' }} />
+                <span className="w-0.5 h-2.5 bg-brand-accent rounded-full animate-pulse" style={{ animationDelay: '0.4s' }} />
               </span>
-            )}
-          </div>
-
-          {/* Download Button */}
-          <button
-            type="button"
-            onClick={handleDownloadClick}
-            disabled={!audioUrl}
-            className="p-1.5 text-gray-400 hover:text-white hover:bg-gray-700 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            aria-label="Download"
-          >
-            <Download className="w-4 h-4" />
-          </button>
+            </span>
+          )}
         </div>
       </div>
     </div>

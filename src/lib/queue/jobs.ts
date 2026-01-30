@@ -20,6 +20,8 @@ export interface BickProcessingJob {
   storageKey: string;
   /** Original filename of the uploaded audio */
   originalFilename: string;
+  /** Thumbnail URL from source video (TikTok, YouTube, etc.) */
+  sourceThumbnailUrl?: string;
 }
 
 /**

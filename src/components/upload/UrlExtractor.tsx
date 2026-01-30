@@ -7,7 +7,7 @@ import { useState, useCallback } from 'react';
 import { detectPlatform, isSupportedUrl, SUPPORTED_PLATFORM_NAMES } from '@/lib/audio/platform';
 
 interface UrlExtractorProps {
-  onExtracted: (audioUrl: string, sourceUrl: string, durationMs: number, title?: string) => void;
+  onExtracted: (audioUrl: string, sourceUrl: string, durationMs: number, title?: string, thumbnailUrl?: string) => void;
   onError?: (error: string) => void;
 }
 
@@ -58,7 +58,7 @@ export function UrlExtractor({ onExtracted, onError }: UrlExtractorProps) {
       if (!data.success) throw new Error(data.error || 'Failed to extract audio');
 
       setState('idle');
-      onExtracted(data.audioUrl, trimmedUrl, data.durationMs, data.sourceTitle);
+      onExtracted(data.audioUrl, trimmedUrl, data.durationMs, data.sourceTitle, data.thumbnailUrl);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to extract audio';
       setError(message);

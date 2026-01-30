@@ -38,11 +38,11 @@ export async function NavShell() {
             </Link>
             {user && (
               <Link
-                href="/my-bicks"
+                href="/saved"
                 className="flex items-center gap-2 text-gray-300 hover:text-white transition-colors"
               >
                 <Bookmark className="w-4 h-4" />
-                My Bicks
+                Saved
               </Link>
             )}
           </nav>
@@ -104,11 +104,11 @@ export async function NavShell() {
           </Link>
           {user && (
             <Link
-              href="/my-bicks"
+              href="/saved"
               className="flex items-center gap-2 text-gray-300 hover:text-white transition-colors text-sm"
             >
               <Bookmark className="w-4 h-4" />
-              My Bicks
+              Saved
             </Link>
           )}
         </nav>

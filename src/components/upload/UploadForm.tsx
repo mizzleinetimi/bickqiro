@@ -16,6 +16,7 @@ interface UploadState {
   step: UploadStep;
   audioSource: File | Blob | string | null;
   sourceUrl: string | null;
+  sourceThumbnailUrl: string | null;
   originalFileName: string | null;
   originalDurationMs: number;
   trimRange: { start: number; end: number };
@@ -27,6 +28,7 @@ const initialState: UploadState = {
   step: 'source',
   audioSource: null,
   sourceUrl: null,
+  sourceThumbnailUrl: null,
   originalFileName: null,
   originalDurationMs: 0,
   trimRange: { start: 0, end: MAX_TRIM_DURATION_MS },
@@ -55,12 +57,15 @@ export function UploadForm() {
   const handleUrlExtracted = useCallback((
     audioUrl: string, 
     sourceUrl: string, 
-    durationMs: number
+    durationMs: number,
+    title?: string,
+    thumbnailUrl?: string
   ) => {
     setState(prev => ({
       ...prev,
       audioSource: audioUrl,
       sourceUrl,
+      sourceThumbnailUrl: thumbnailUrl || null,
       originalDurationMs: durationMs,
       error: null,
       step: 'trim',
@@ -88,6 +93,10 @@ export function UploadForm() {
     setState(prev => ({ ...prev, step: 'metadata' }));
   }, []);
 
+  const handleRemoveThumbnail = useCallback(() => {
+    setState(prev => ({ ...prev, sourceThumbnailUrl: null }));
+  }, []);
+
   const handleBackToSource = useCallback(() => {
     setState(initialState);
   }, []);
@@ -97,7 +106,7 @@ export function UploadForm() {
   }, []);
 
   const handleMetadataSubmit = useCallback(async (metadata: UploadMetadata) => {
-    const { audioSource, sourceUrl, originalFileName, originalDurationMs, trimRange } = state;
+    const { audioSource, sourceUrl, sourceThumbnailUrl, originalFileName, originalDurationMs, trimRange } = state;
     
     if (!audioSource) return;
 
@@ -159,6 +168,7 @@ export function UploadForm() {
         body: JSON.stringify({
           storageKey: session.storageKey,
           sizeBytes: audioBlob.size,
+          sourceThumbnailUrl,
         }),
       });
 
@@ -209,6 +219,29 @@ export function UploadForm() {
               ← Choose different audio
             </button>
           </div>
+
+          {/* Thumbnail Preview (for URL extractions) */}
+          {state.sourceThumbnailUrl && (
+            <div className="flex items-start gap-4 p-4 bg-[#1a1a1a] rounded-lg border border-[#262626]">
+              <div className="relative w-24 h-24 flex-shrink-0 rounded-lg overflow-hidden bg-gray-800">
+                <img
+                  src={state.sourceThumbnailUrl}
+                  alt="Video thumbnail"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-white">Thumbnail from source</p>
+                <p className="text-xs text-gray-400 mt-1">This thumbnail will be used for your bick</p>
+                <button
+                  onClick={handleRemoveThumbnail}
+                  className="mt-2 text-xs text-red-400 hover:text-red-300 transition-colors"
+                >
+                  Remove thumbnail
+                </button>
+              </div>
+            </div>
+          )}
 
           <WaveformEditor
             audioSource={state.audioSource}

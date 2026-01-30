@@ -92,6 +92,12 @@ export interface TrendingScore {
   computed_at: string;
 }
 
+export interface SavedBick {
+  user_id: string;
+  bick_id: string;
+  created_at: string;
+}
+
 // ============================================================================
 // INSERT TYPES (for creating new records)
 // ============================================================================

@@ -19,6 +19,7 @@ import type { Bick, BickAssetInsert } from '@/types/database.types';
 interface CompleteUploadRequest {
   storageKey: string;
   sizeBytes: number;
+  sourceThumbnailUrl?: string;
 }
 
 /**
@@ -67,11 +68,19 @@ function validateRequest(body: unknown): {
     return { valid: false, error: 'Size in bytes must be a positive number' };
   }
 
+  // Validate sourceThumbnailUrl (optional)
+  if (data.sourceThumbnailUrl !== undefined && data.sourceThumbnailUrl !== null) {
+    if (typeof data.sourceThumbnailUrl !== 'string') {
+      return { valid: false, error: 'Source thumbnail URL must be a string' };
+    }
+  }
+
   return {
     valid: true,
     data: {
       storageKey: data.storageKey,
       sizeBytes: data.sizeBytes,
+      sourceThumbnailUrl: data.sourceThumbnailUrl as string | undefined,
     },
   };
 }
@@ -137,7 +146,7 @@ export async function POST(
       );
     }
 
-    const { storageKey, sizeBytes } = validation.data;
+    const { storageKey, sizeBytes, sourceThumbnailUrl } = validation.data;
 
     // Get bick record
     const adminClient = createAdminClient();
@@ -194,6 +203,7 @@ export async function POST(
       bickId,
       storageKey,
       originalFilename: bick.original_filename || 'unknown.mp3',
+      sourceThumbnailUrl,
     };
 
     let jobId: string;

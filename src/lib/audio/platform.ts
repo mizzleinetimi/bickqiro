@@ -19,13 +19,13 @@ export type SupportedPlatform = 'youtube' | 'tiktok' | 'instagram' | 'twitter';
  * 
  * These patterns match URLs from:
  * - YouTube: youtube.com, youtu.be
- * - TikTok: tiktok.com, vm.tiktok.com
+ * - TikTok: tiktok.com, vm.tiktok.com, vt.tiktok.com (short links)
  * - Instagram: instagram.com/p/, instagram.com/reel/, instagram.com/reels/
  * - Twitter/X: twitter.com, x.com with /status/
  */
 export const SUPPORTED_PLATFORMS: Record<SupportedPlatform, RegExp> = {
   youtube: /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+/i,
-  tiktok: /^(https?:\/\/)?(www\.|vm\.)?tiktok\.com\/.+/i,
+  tiktok: /^(https?:\/\/)?(www\.|vm\.|vt\.)?tiktok\.com\/.+/i,
   instagram: /^(https?:\/\/)?(www\.)?instagram\.com\/(p|reel|reels)\/.+/i,
   twitter: /^(https?:\/\/)?(www\.)?(twitter\.com|x\.com)\/.+\/status\/.+/i,
 };

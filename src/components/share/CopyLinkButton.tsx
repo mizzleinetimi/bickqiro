@@ -55,7 +55,7 @@ export function CopyLinkButton({ url, onCopy, className = '' }: CopyLinkButtonPr
       case 'error':
         return `${baseStyles} bg-red-500/20 text-red-400 focus:ring-red-500`;
       default:
-        return `${baseStyles} bg-[#2a2a2a] text-[#a0a0a0] hover:bg-[#333333] hover:text-[#f5f5f5] focus:ring-[#FCD34D]`;
+        return baseStyles;
     }
   };
 
@@ -63,7 +63,7 @@ export function CopyLinkButton({ url, onCopy, className = '' }: CopyLinkButtonPr
     <button
       type="button"
       onClick={handleCopy}
-      className={`${getButtonStyles()} ${className}`}
+      className={`${getButtonStyles()} ${copyState === 'idle' ? (className || 'bg-[#2a2a2a] text-[#a0a0a0] hover:bg-[#333333] hover:text-[#f5f5f5]') : ''} focus:ring-[#FCD34D]`}
       aria-label={copyState === 'copied' ? 'Link copied to clipboard' : 'Copy link to clipboard'}
       aria-live="polite"
     >

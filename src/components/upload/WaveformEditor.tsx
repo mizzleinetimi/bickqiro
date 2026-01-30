@@ -53,15 +53,15 @@ export function WaveformEditor({
 
     const ws = WaveSurfer.create({
       container: containerRef.current,
-      waveColor: '#6366F1',
-      progressColor: '#4F46E5',
-      cursorColor: '#1F2937',
+      waveColor: '#4B5563',
+      progressColor: '#EF4444',
+      cursorColor: '#EF4444',
       cursorWidth: 2,
       height: 128,
       normalize: true,
-      barWidth: 2,
-      barGap: 1,
-      barRadius: 2,
+      barWidth: 3,
+      barGap: 2,
+      barRadius: 3,
       plugins: [regions],
     });
 
@@ -78,7 +78,7 @@ export function WaveformEditor({
         const region = regions.addRegion({
           start: 0,
           end: maxDuration,
-          color: 'rgba(99, 102, 241, 0.3)',
+          color: 'rgba(239, 68, 68, 0.2)',
           drag: true,
           resize: true,
         });
@@ -176,13 +176,13 @@ export function WaveformEditor({
       <div className="relative">
         <div 
           ref={containerRef} 
-          className="w-full rounded-lg bg-gray-50 p-4 min-h-[160px]"
+          className="w-full rounded-lg bg-[#1a1a1a] p-4 min-h-[160px] waveform-editor"
         />
         
         {isLoading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-gray-50 rounded-lg">
-            <div className="flex items-center gap-2 text-gray-500">
-              <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+          <div className="absolute inset-0 flex items-center justify-center bg-[#1a1a1a] rounded-lg">
+            <div className="flex items-center gap-2 text-gray-400">
+              <svg className="animate-spin h-5 w-5 text-[#EF4444]" viewBox="0 0 24 24">
                 <circle 
                   className="opacity-25" 
                   cx="12" cy="12" r="10" 
@@ -202,13 +202,31 @@ export function WaveformEditor({
         )}
       </div>
 
+      {/* Custom styles for region handles */}
+      <style jsx global>{`
+        .waveform-editor [part="region-handle"] {
+          width: 6px !important;
+          background: #EF4444 !important;
+          border-radius: 3px !important;
+          opacity: 1 !important;
+        }
+        .waveform-editor [part="region-handle"]:hover {
+          background: #DC2626 !important;
+          transform: scaleY(1.05);
+        }
+        .waveform-editor [part="region"] {
+          border-left: 3px solid #EF4444 !important;
+          border-right: 3px solid #EF4444 !important;
+        }
+      `}</style>
+
       {/* Controls */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <button
             onClick={togglePlay}
             disabled={isLoading}
-            className="flex items-center justify-center w-12 h-12 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="flex items-center justify-center w-12 h-12 bg-[#EF4444] text-white rounded-full hover:bg-[#DC2626] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             aria-label={isPlaying ? 'Pause' : 'Play'}
           >
             {isPlaying ? (
@@ -222,15 +240,15 @@ export function WaveformEditor({
             )}
           </button>
           
-          <div className="text-sm text-gray-600 font-mono">
+          <div className="text-sm text-gray-400 font-mono">
             {formatTime(currentTime)} / {formatTime(duration)}
           </div>
         </div>
 
-        <div className="text-sm text-gray-600">
+        <div className="text-sm text-gray-400">
           {needsTrimming ? (
             <span className="flex items-center gap-1">
-              <span className="inline-block w-2 h-2 bg-indigo-500 rounded-full" />
+              <span className="inline-block w-2 h-2 bg-[#EF4444] rounded-full" />
               Selected: {selectionDuration.toFixed(1)}s / {maxDuration}s max
             </span>
           ) : (
@@ -241,9 +259,9 @@ export function WaveformEditor({
 
       {/* Trimming instructions */}
       {needsTrimming && (
-        <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
-          <p className="text-sm text-amber-800">
-            <strong>Audio exceeds {maxDuration} seconds.</strong> Drag the highlighted region to select which portion to upload. 
+        <div className="p-3 bg-[#EF4444]/10 border border-[#EF4444]/20 rounded-lg">
+          <p className="text-sm text-gray-300">
+            <strong className="text-white">Audio exceeds {maxDuration} seconds.</strong> Drag the highlighted region to select which portion to upload. 
             You can also resize the selection by dragging its edges.
           </p>
         </div>

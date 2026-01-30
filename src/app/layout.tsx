@@ -11,6 +11,9 @@ export const metadata: Metadata = {
     template: '%s | Bickqr',
   },
   description: 'SEO-first library of short audio clips. Search trending sounds, play instantly, and share rich links.',
+  icons: {
+    icon: '/favicon.svg',
+  },
 }
 
 export default function RootLayout({

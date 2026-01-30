@@ -493,7 +493,7 @@ function encodeSearchCursor(cursor: SearchCursor): string {
 
 /**
  * Full-text search for bicks
- * Uses PostgreSQL tsvector with weighted title (A) and description (B) search
+ * Uses ILIKE for partial matching on title, description, and tags
  * Returns only live bicks, ordered by relevance
  */
 export async function searchBicks(options: SearchOptions): Promise<SearchResult> {
@@ -518,8 +518,7 @@ export async function searchBicks(options: SearchOptions): Promise<SearchResult>
     cursorData = decodeSearchCursor(cursor);
   }
 
-  // Use raw SQL for full-text search with ts_rank
-  // We need to use RPC or raw query for proper tsvector search
+  // Use RPC for search with ILIKE partial matching
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await (supabase.rpc as any)('search_bicks', {
     search_query: sanitizedQuery,

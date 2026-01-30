@@ -23,6 +23,7 @@ import { downloadAudio, cleanupTempFiles } from '../lib/downloader';
 import { generateWaveformJson } from '../lib/waveform';
 import { generateOgImage } from '../lib/og-image';
 import { generateTeaser } from '../lib/teaser';
+import { generateThumbnail } from '../lib/thumbnail';
 import { uploadAsset, generateStorageKey } from '../lib/uploader';
 import { validateAudio } from '../lib/ffmpeg';
 import { stat } from 'fs/promises';
@@ -35,12 +36,13 @@ const MIME_TYPES: Record<AssetType, string> = {
   waveform_json: 'application/json',
   og_image: 'image/png',
   teaser_mp4: 'video/mp4',
+  thumbnail: 'image/jpeg',
 };
 
 /**
  * Required asset types that must exist before a bick can be marked as live.
  */
-const REQUIRED_ASSETS: AssetType[] = ['waveform_json', 'og_image', 'teaser_mp4'];
+const REQUIRED_ASSETS: AssetType[] = ['waveform_json', 'og_image', 'teaser_mp4', 'thumbnail'];
 
 /**
  * Validates that all required assets exist for a bick.
@@ -117,10 +119,22 @@ export async function processBick(
   job: BickProcessingJob,
   supabase: SupabaseClient<Database>
 ): Promise<ProcessingResult> {
-  const { bickId, storageKey } = job;
+  const { bickId, storageKey, sourceThumbnailUrl } = job;
   const tempDir = `/tmp/bick-${bickId}`;
 
   try {
+    // 0. Fetch bick to get source_url (fallback for thumbnail)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: bickData, error: fetchError } = await (supabase.from('bicks') as any)
+      .select('source_url')
+      .eq('id', bickId)
+      .single();
+    
+    if (fetchError) {
+      console.warn(`[Processor] Could not fetch bick data: ${fetchError.message}`);
+    }
+    const sourceUrl: string | null = bickData?.source_url ?? null;
+
     // 1. Download audio from R2
     console.log(`[Processor] Downloading audio for bick ${bickId}`);
     const audioPath = await downloadAudio(storageKey, tempDir);
@@ -151,7 +165,14 @@ export async function processBick(
     const ogResult = await uploadAsset(ogPath, ogKey, MIME_TYPES.og_image);
     await createAssetRecord(supabase, bickId, 'og_image', ogKey, ogResult.cdnUrl, ogPath);
 
-    // 5. Generate teaser MP4
+    // 5. Generate thumbnail (from provided URL, source URL, or OG image)
+    console.log(`[Processor] Generating thumbnail for bick ${bickId}`);
+    const thumbPath = await generateThumbnail(sourceThumbnailUrl || null, sourceUrl, ogPath, tempDir);
+    const thumbKey = generateStorageKey(bickId, 'thumb.jpg');
+    const thumbResult = await uploadAsset(thumbPath, thumbKey, MIME_TYPES.thumbnail);
+    await createAssetRecord(supabase, bickId, 'thumbnail', thumbKey, thumbResult.cdnUrl, thumbPath);
+
+    // 6. Generate teaser MP4
     console.log(`[Processor] Generating teaser for bick ${bickId}`);
     const teaserPath = await generateTeaser(audioPath, tempDir);
     const teaserKey = generateStorageKey(bickId, 'teaser.mp4');

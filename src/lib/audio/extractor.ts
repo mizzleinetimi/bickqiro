@@ -48,6 +48,8 @@ export interface ExtractionResult {
   title?: string;
   /** Detected platform */
   platform: SupportedPlatform;
+  /** Thumbnail URL from the source video */
+  thumbnailUrl?: string;
 }
 
 /**
@@ -132,6 +134,7 @@ export async function extractAudioFromUrl(
     // Get video info first
     let title: string | undefined;
     let durationMs: number;
+    let thumbnailUrl: string | undefined;
 
     try {
       await execAsync(
@@ -144,6 +147,7 @@ export async function extractAudioFromUrl(
       const infoJson = JSON.parse(infoContent);
       title = infoJson.title;
       durationMs = Math.round((infoJson.duration || 0) * 1000);
+      thumbnailUrl = infoJson.thumbnail;
     } catch (error) {
       // Check if it's a timeout
       if (error instanceof Error && error.message.includes('TIMEOUT')) {
@@ -204,6 +208,7 @@ export async function extractAudioFromUrl(
       durationMs,
       title,
       platform,
+      thumbnailUrl,
     };
   } finally {
     // Cleanup info file (but not the audio file - caller is responsible for that)

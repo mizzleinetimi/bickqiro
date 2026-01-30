@@ -1,13 +1,17 @@
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
+import Image from 'next/image';
 import { getBickBySlugAndId } from '@/lib/supabase/queries';
 import { parseSlugId } from '@/lib/utils/url';
 import { BickPlayer } from '@/components/bick/BickPlayer';
 import { BickJsonLd } from '@/components/bick/BickJsonLd';
-import { SharePanel } from '@/components/share/SharePanel';
 import { DownloadButton } from '@/components/share/DownloadButton';
 import { UniversalShareButton } from '@/components/share/UniversalShareButton';
+import { CopyLinkButton } from '@/components/share/CopyLinkButton';
 import { TagDisplay } from '@/components/tags/TagDisplay';
+import { detectPlatform } from '@/lib/audio/platform';
+
+const DEFAULT_THUMBNAIL = '/brand-thumb.jpg';
 
 interface BickPageProps {
   params: Promise<{ slugId: string }>;
@@ -59,6 +63,9 @@ export default async function BickPage({ params }: BickPageProps) {
   const audioAsset = bick.assets?.find(a => a.asset_type === 'audio' || a.asset_type === 'original');
   const ogImage = bick.assets?.find(a => a.asset_type === 'og_image');
   const teaser = bick.assets?.find(a => a.asset_type === 'teaser_mp4');
+  const thumbnailAsset = bick.assets?.find(a => a.asset_type === 'thumbnail');
+  const thumbnailUrl = thumbnailAsset?.cdn_url || ogImage?.cdn_url || DEFAULT_THUMBNAIL;
+  const isDefaultThumbnail = thumbnailUrl === DEFAULT_THUMBNAIL;
 
   const ownerName = bick.owner?.display_name || bick.owner?.username;
 
@@ -68,6 +75,18 @@ export default async function BickPage({ params }: BickPageProps) {
   return (
     <div className="max-w-2xl mx-auto py-12 px-4">
       <BickJsonLd bick={bick} audioUrl={audioAsset?.cdn_url} ogImageUrl={ogImage?.cdn_url} />
+
+      {/* Thumbnail */}
+      <div className={`relative w-24 h-24 rounded-lg overflow-hidden mb-4 ${isDefaultThumbnail ? 'bg-[#1a1a1a]' : 'bg-gray-800'}`}>
+        <Image
+          src={thumbnailUrl}
+          alt={bick.title}
+          fill
+          className={isDefaultThumbnail ? "object-contain p-2" : "object-cover"}
+          sizes="96px"
+          priority
+        />
+      </div>
 
       <h1 className="text-4xl font-bold text-white mb-3 tracking-tight">{bick.title}</h1>
 
@@ -88,6 +107,23 @@ export default async function BickPage({ params }: BickPageProps) {
         </div>
       )}
 
+      {/* Source attribution */}
+      {bick.source_url && (
+        <div className="mb-8">
+          <span className="text-sm text-gray-400">
+            gotten from{' '}
+            <a
+              href={bick.source_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-brand-primary hover:underline"
+            >
+              {detectPlatform(bick.source_url) || 'source'}
+            </a>
+          </span>
+        </div>
+      )}
+
       {/* Player Card */}
       <div className="bg-surface rounded-2xl border border-surface-border p-8 shadow-2xl shadow-black/50">
         <BickPlayer
@@ -97,12 +133,17 @@ export default async function BickPage({ params }: BickPageProps) {
           bickId={bick.id}
         />
 
-        {/* Action Buttons */}
+        {/* Action Buttons - All 3 with distinct colors */}
         <div className="flex flex-wrap items-center gap-4 mt-8 pt-8 border-t border-surface-border">
+          <CopyLinkButton
+            url={canonicalUrl}
+            className="bg-blue-600 text-white hover:bg-blue-700"
+          />
           <DownloadButton
             audioUrl={audioAsset?.cdn_url ?? undefined}
             videoUrl={teaser?.cdn_url ?? undefined}
             title={bick.title}
+            className="bg-green-600 text-white hover:bg-green-700"
           />
           <UniversalShareButton
             url={canonicalUrl}
@@ -112,14 +153,6 @@ export default async function BickPage({ params }: BickPageProps) {
           />
         </div>
       </div>
-
-      {/* Additional Share Options */}
-      <SharePanel
-        bickId={bick.id}
-        bickUrl={canonicalUrl}
-        bickTitle={bick.title}
-        className="mt-6"
-      />
 
       {/* Stats */}
       <div className="mt-8 flex items-center gap-8 text-sm text-gray-500 font-medium">
@@ -136,6 +169,19 @@ export default async function BickPage({ params }: BickPageProps) {
           {bick.share_count.toLocaleString()} shares
         </span>
       </div>
+
+      {/* Made with Bickqr */}
+      <div className="mt-12 pt-8 border-t border-surface-border flex items-center justify-center gap-2 text-sm text-gray-500">
+        <svg className="w-5 h-5" viewBox="0 0 24 24">
+          <path fill="#EF4444" d="M6 17h3l2-4V7H5v6h3z" />
+          <path fill="#FCD34D" d="M14 17h3l2-4V7h-6v6h3z" />
+        </svg>
+        <span>made with</span>
+        <a href="/" className="font-medium hover:underline">
+          <span className="text-brand-primary">bick</span><span className="text-brand-accent">qr</span>
+        </a>
+      </div>
+
     </div>
   );
 }

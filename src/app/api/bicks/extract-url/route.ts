@@ -32,6 +32,7 @@ interface ExtractUrlSuccessResponse {
   audioUrl: string;
   durationMs: number;
   sourceTitle?: string;
+  thumbnailUrl?: string;
 }
 
 /**
@@ -145,6 +146,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ExtractUr
         audioUrl,
         durationMs: result.durationMs,
         sourceTitle: result.title,
+        thumbnailUrl: result.thumbnailUrl,
       });
     } catch (fileError) {
       // Clean up on error

@@ -29,6 +29,7 @@ interface UploadSessionRequest {
   durationMs: number;
   originalDurationMs?: number;
   sourceUrl?: string;
+  sourceThumbnailUrl?: string;
 }
 
 /**
@@ -134,6 +135,13 @@ function validateRequest(body: unknown): {
     }
   }
 
+  // Validate sourceThumbnailUrl (optional)
+  if (data.sourceThumbnailUrl !== undefined && data.sourceThumbnailUrl !== null) {
+    if (typeof data.sourceThumbnailUrl !== 'string') {
+      errors.sourceThumbnailUrl = 'Source thumbnail URL must be a string';
+    }
+  }
+
   if (Object.keys(errors).length > 0) {
     return { valid: false, errors };
   }
@@ -149,6 +157,7 @@ function validateRequest(body: unknown): {
       durationMs: data.durationMs as number,
       originalDurationMs: data.originalDurationMs as number | undefined,
       sourceUrl: data.sourceUrl as string | undefined,
+      sourceThumbnailUrl: data.sourceThumbnailUrl as string | undefined,
     },
   };
 }
@@ -198,7 +207,8 @@ export async function POST(request: NextRequest): Promise<NextResponse<UploadSes
       contentType, 
       durationMs, 
       originalDurationMs, 
-      sourceUrl 
+      sourceUrl,
+      sourceThumbnailUrl,
     } = validation.data;
 
     // Get authenticated user (if any)

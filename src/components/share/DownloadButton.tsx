@@ -58,12 +58,12 @@ export function DownloadButton({ audioUrl, videoUrl, title, className = '' }: Do
   if (!audioUrl && !videoUrl) return null;
 
   return (
-    <div className={`relative ${className}`} ref={dropdownRef}>
+    <div className={`relative`} ref={dropdownRef}>
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
         disabled={downloading !== null}
-        className="flex items-center gap-2 px-4 py-2 rounded-full font-medium bg-[#262626] text-white hover:bg-[#333333] transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#0a0a0a] focus:ring-[#EF4444] disabled:opacity-50"
+        className={`flex items-center gap-2 px-4 py-2 rounded-full font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#0a0a0a] disabled:opacity-50 ${className || 'bg-[#262626] text-white hover:bg-[#333333] focus:ring-[#EF4444]'}`}
         aria-label="Download options"
         aria-expanded={isOpen}
         aria-haspopup="true"
