@@ -6,6 +6,8 @@
  * - OG image (1200x630) for social sharing
  * - Teaser MP4 (1280x720) for social media embeds
  * 
+ * Also provides an HTTP API for URL extraction (yt-dlp)
+ * 
  * **Validates: Requirements 8.1, 8.4**
  */
 
@@ -17,6 +19,7 @@ import { createClient } from '@supabase/supabase-js';
 import type { Database } from '../src/types/database.types';
 import type { BickProcessingJob } from '../src/lib/queue/jobs';
 import { processBick } from './processors/bick-processor';
+import { startApiServer } from './api';
 
 // Environment validation
 const REDIS_URL = process.env.REDIS_URL;
@@ -95,3 +98,6 @@ process.on('SIGINT', async () => {
 
 console.log('[Worker] Bick processing worker started');
 console.log('[Worker] FFmpeg asset generation enabled');
+
+// Start the HTTP API server for URL extraction
+startApiServer();

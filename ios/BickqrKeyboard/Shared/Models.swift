@@ -13,7 +13,7 @@ struct Bick: Codable, Identifiable {
     let title: String
     let description: String?
     let durationMs: Int?
-    let playCount: Int
+    let playCount: Int?
     let assets: [BickAsset]
     
     enum CodingKeys: String, CodingKey {
@@ -60,7 +60,7 @@ struct Bick: Codable, Identifiable {
 
 struct BickAsset: Codable {
     let id: String
-    let bickId: String
+    let bickId: String?
     let assetType: String
     let cdnUrl: String?
     let mimeType: String?

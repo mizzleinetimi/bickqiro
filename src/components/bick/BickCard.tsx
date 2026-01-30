@@ -265,6 +265,22 @@ export function BickCard({ bick, variant = 'default', showTrending = false }: Bi
             <button
               type="button"
               onClick={handleSaveClick}
+              data-favorite-bick={JSON.stringify({
+                id: bick.id,
+                slug: bick.slug,
+                title: bick.title,
+                description: bick.description,
+                duration_ms: bick.duration_ms,
+                play_count: bick.play_count,
+                assets: bick.assets?.map(a => ({
+                  id: a.id,
+                  bick_id: a.bick_id,
+                  asset_type: a.asset_type,
+                  cdn_url: a.cdn_url,
+                  mime_type: a.mime_type,
+                  size_bytes: a.size_bytes,
+                })) || [],
+              })}
               className={`p-1.5 rounded-full transition-colors ${
                 isSaved 
                   ? 'text-brand-accent bg-brand-accent/20' 

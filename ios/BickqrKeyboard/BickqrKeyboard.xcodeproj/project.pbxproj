@@ -17,6 +17,8 @@
 		C1000003 /* BickAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2000003 /* BickAPI.swift */; };
 		C1000004 /* AudioManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2000004 /* AudioManager.swift */; };
 		C1000005 /* ImageCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2000005 /* ImageCache.swift */; };
+		CE279BF92F2D33CE00C48378 /* FavoritesManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE279BF82F2D33CE00C48378 /* FavoritesManager.swift */; };
+		CE279BFA2F2D33CE00C48378 /* FavoritesManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE279BF82F2D33CE00C48378 /* FavoritesManager.swift */; };
 		D1000001 /* Config.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2000001 /* Config.swift */; };
 		D1000002 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2000002 /* Models.swift */; };
 		D1000003 /* BickAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2000003 /* BickAPI.swift */; };
@@ -62,6 +64,7 @@
 		C2000003 /* BickAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BickAPI.swift; sourceTree = "<group>"; };
 		C2000004 /* AudioManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioManager.swift; sourceTree = "<group>"; };
 		C2000005 /* ImageCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageCache.swift; sourceTree = "<group>"; };
+		CE279BF82F2D33CE00C48378 /* FavoritesManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FavoritesManager.swift; sourceTree = "<group>"; };
 		E2000001 /* BickKeyboard.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = BickKeyboard.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		E2000002 /* BickqrKeyboard.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BickqrKeyboard.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -109,6 +112,7 @@
 			isa = PBXGroup;
 			children = (
 				B2000001 /* KeyboardViewController.swift */,
+				CE279BF82F2D33CE00C48378 /* FavoritesManager.swift */,
 				B2000002 /* BickCell.swift */,
 				B2000003 /* Info.plist */,
 			);
@@ -242,6 +246,7 @@
 				D1000003 /* BickAPI.swift in Sources */,
 				D1000004 /* AudioManager.swift in Sources */,
 				D1000005 /* ImageCache.swift in Sources */,
+				CE279BFA2F2D33CE00C48378 /* FavoritesManager.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -256,6 +261,7 @@
 				C1000003 /* BickAPI.swift in Sources */,
 				C1000004 /* AudioManager.swift in Sources */,
 				C1000005 /* ImageCache.swift in Sources */,
+				CE279BF92F2D33CE00C48378 /* FavoritesManager.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

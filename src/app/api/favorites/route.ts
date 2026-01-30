@@ -26,7 +26,9 @@ async function getDeviceId(): Promise<string> {
 
 // GET - List all favorites for this device
 export async function GET(request: NextRequest): Promise<NextResponse> {
-  const deviceId = await getDeviceId();
+  // Check for X-Device-ID header (from iOS app) first, then fall back to cookie
+  const headerDeviceId = request.headers.get('X-Device-ID');
+  const deviceId = headerDeviceId || await getDeviceId();
   const supabase = await createClient();
   
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

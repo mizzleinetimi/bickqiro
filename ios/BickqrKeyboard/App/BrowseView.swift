@@ -68,22 +68,38 @@ struct BickqrWebView: UIViewRepresentable {
         // Inject JavaScript to intercept favorite actions
         let script = WKUserScript(
             source: """
-            // Listen for favorite button clicks and notify native app
-            document.addEventListener('click', function(e) {
-                const btn = e.target.closest('[data-favorite-bick]');
-                if (btn) {
-                    const bickData = btn.getAttribute('data-favorite-bick');
-                    if (bickData) {
-                        window.webkit.messageHandlers.favoritesHandler.postMessage({
-                            action: 'toggle',
-                            bick: JSON.parse(bickData)
-                        });
+            (function() {
+                // Listen for favorite button clicks and notify native app
+                // Use capture phase to intercept before React handles it
+                document.addEventListener('click', function(e) {
+                    const btn = e.target.closest('[data-favorite-bick]');
+                    if (btn) {
+                        const bickData = btn.getAttribute('data-favorite-bick');
+                        if (bickData && window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.favoritesHandler) {
+                            try {
+                                const parsed = JSON.parse(bickData);
+                                window.webkit.messageHandlers.favoritesHandler.postMessage({
+                                    action: 'toggle',
+                                    bick: parsed
+                                });
+                            } catch (err) {
+                                console.error('Failed to parse bick data:', err);
+                            }
+                        }
                     }
+                }, true);
+                
+                // Also observe for dynamically added buttons (React hydration)
+                const observer = new MutationObserver(function(mutations) {
+                    // Re-check for favorite buttons after DOM changes
+                });
+                observer.observe(document.body, { childList: true, subtree: true });
+                
+                // Notify when page loads
+                if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.favoritesHandler) {
+                    window.webkit.messageHandlers.favoritesHandler.postMessage({ action: 'pageLoaded' });
                 }
-            }, true);
-            
-            // Notify when page loads
-            window.webkit.messageHandlers.favoritesHandler.postMessage({ action: 'pageLoaded' });
+            })();
             """,
             injectionTime: .atDocumentEnd,
             forMainFrameOnly: true
@@ -152,17 +168,21 @@ struct BickqrWebView: UIViewRepresentable {
             
             switch action {
             case "toggle":
-                if let bickData = body["bick"] as? [String: Any],
-                   let bick = try? JSONSerialization.data(withJSONObject: bickData),
-                   let decodedBick = try? JSONDecoder().decode(Bick.self, from: bick) {
-                    
-                    if FavoritesManager.shared.isFavorite(id: decodedBick.id) {
-                        FavoritesManager.shared.removeFavorite(id: decodedBick.id)
-                    } else {
-                        FavoritesManager.shared.addFavorite(decodedBick)
+                if let bickData = body["bick"] as? [String: Any] {
+                    do {
+                        let jsonData = try JSONSerialization.data(withJSONObject: bickData)
+                        let decodedBick = try JSONDecoder().decode(Bick.self, from: jsonData)
+                        
+                        if FavoritesManager.shared.isFavorite(id: decodedBick.id) {
+                            FavoritesManager.shared.removeFavorite(id: decodedBick.id)
+                        } else {
+                            FavoritesManager.shared.addFavorite(decodedBick)
+                        }
+                        
+                        parent.onFavoritesChanged(FavoritesManager.shared.getFavorites().count)
+                    } catch {
+                        print("Failed to decode bick: \(error)")
                     }
-                    
-                    parent.onFavoritesChanged(FavoritesManager.shared.getFavorites().count)
                 }
                 
             case "pageLoaded":
