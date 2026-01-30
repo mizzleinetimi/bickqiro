@@ -11,7 +11,11 @@ import type { Profile } from '@/types/database.types';
 export async function signInWithGoogle(redirectTo?: string): Promise<{ url?: string; error?: string }> {
   const supabase = await createClient();
   const headersList = await headers();
-  const origin = headersList.get('origin') || 'http://localhost:3000';
+  
+  // Use NEXT_PUBLIC_APP_URL for production, fallback to origin header, then localhost
+  const origin = process.env.NEXT_PUBLIC_APP_URL 
+    || headersList.get('origin') 
+    || 'http://localhost:3000';
   
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
