@@ -16,13 +16,13 @@ export function TrendingResults({ initialBicks, initialCursor }: TrendingResults
 
   const loadMore = async () => {
     if (!cursor || loading) return;
-    
+
     setLoading(true);
     try {
       const params = new URLSearchParams({ cursor });
       const response = await fetch(`/api/trending?${params}`);
       if (!response.ok) throw new Error('Failed to load more');
-      
+
       const data = await response.json();
       setBicks(prev => [...prev, ...data.bicks]);
       setCursor(data.nextCursor);
@@ -36,30 +36,30 @@ export function TrendingResults({ initialBicks, initialCursor }: TrendingResults
   if (bicks.length === 0) {
     return (
       <div className="text-center py-16">
-        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[#1e1e1e] flex items-center justify-center">
-          <svg className="w-8 h-8 text-[#a0a0a0]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-surface border border-surface-border flex items-center justify-center">
+          <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
           </svg>
         </div>
-        <p className="text-[#a0a0a0] text-lg">No trending sounds yet.</p>
+        <p className="text-gray-400 text-lg">No trending sounds yet.</p>
       </div>
     );
   }
 
   return (
     <div>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {bicks.map((bick) => (
           <BickCard key={bick.id} bick={bick} />
         ))}
       </div>
-      
+
       {cursor && (
-        <div className="mt-8 text-center">
+        <div className="mt-12 text-center">
           <button
             onClick={loadMore}
             disabled={loading}
-            className="px-6 py-3 bg-[#1e1e1e] hover:bg-[#2a2a2a] text-[#f5f5f5] rounded-full font-medium border border-[#2a2a2a] transition-colors disabled:opacity-50"
+            className="px-8 py-3 bg-surface hover:bg-surface-hover text-white rounded-full font-bold border border-surface-border transition-all shadow-lg hover:shadow-xl disabled:opacity-50"
           >
             {loading ? 'Loading...' : 'Load More'}
           </button>

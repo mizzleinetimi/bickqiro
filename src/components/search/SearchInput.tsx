@@ -23,9 +23,9 @@ export function SearchInput({
   const handleSubmit = useCallback(async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const query = inputRef.current?.value.trim() || '';
-    
+
     if (!query) return;
-    
+
     if (onSearch) {
       onSearch(query);
     } else {
@@ -67,7 +67,7 @@ export function SearchInput({
           defaultValue={defaultValue}
           placeholder={placeholder}
           autoFocus={autoFocus}
-          className="block w-full pl-12 pr-4 py-4 border border-[#262626] rounded-full bg-[#141414] text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#EF4444] focus:border-transparent transition-all"
+          className="block w-full pl-12 pr-4 py-4 border border-surface-border rounded-full bg-surface text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent transition-all shadow-xl shadow-black/20"
           aria-label="Search"
         />
       </div>

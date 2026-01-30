@@ -59,46 +59,46 @@ export default async function BickPage({ params }: BickPageProps) {
   const audioAsset = bick.assets?.find(a => a.asset_type === 'audio' || a.asset_type === 'original');
   const ogImage = bick.assets?.find(a => a.asset_type === 'og_image');
   const teaser = bick.assets?.find(a => a.asset_type === 'teaser_mp4');
-  
+
   const ownerName = bick.owner?.display_name || bick.owner?.username;
-  
+
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://bickqr.com';
   const canonicalUrl = `${baseUrl}/bick/${bick.slug}-${bick.id}`;
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="max-w-2xl mx-auto py-12 px-4">
       <BickJsonLd bick={bick} audioUrl={audioAsset?.cdn_url} ogImageUrl={ogImage?.cdn_url} />
-      
-      <h1 className="text-3xl font-bold text-[#f5f5f5] mb-2">{bick.title}</h1>
-      
+
+      <h1 className="text-4xl font-bold text-white mb-3 tracking-tight">{bick.title}</h1>
+
       {ownerName && (
-        <p className="text-sm text-[#a0a0a0] mb-4">
-          by <span className="font-medium text-[#FCD34D]">{ownerName}</span>
+        <p className="text-sm text-gray-400 mb-6">
+          by <span className="font-bold text-brand-primary">{ownerName}</span>
         </p>
       )}
-      
+
       {bick.description && (
-        <p className="text-[#a0a0a0] mb-6">{bick.description}</p>
+        <p className="text-gray-300 mb-8 text-lg leading-relaxed">{bick.description}</p>
       )}
-      
+
       {/* Tags display */}
       {bick.tags && bick.tags.length > 0 && (
-        <div className="mb-6">
+        <div className="mb-8">
           <TagDisplay tags={bick.tags} size="md" showAll />
         </div>
       )}
-      
+
       {/* Player Card */}
-      <div className="bg-[#1e1e1e] rounded-xl border border-[#2a2a2a] p-6">
-        <BickPlayer 
+      <div className="bg-surface rounded-2xl border border-surface-border p-8 shadow-2xl shadow-black/50">
+        <BickPlayer
           audioUrl={audioAsset?.cdn_url}
           title={bick.title}
           durationMs={bick.duration_ms}
           bickId={bick.id}
         />
-        
+
         {/* Action Buttons */}
-        <div className="flex flex-wrap items-center gap-3 mt-6 pt-6 border-t border-[#2a2a2a]">
+        <div className="flex flex-wrap items-center gap-4 mt-8 pt-8 border-t border-surface-border">
           <DownloadButton
             audioUrl={audioAsset?.cdn_url ?? undefined}
             videoUrl={teaser?.cdn_url ?? undefined}
@@ -112,26 +112,26 @@ export default async function BickPage({ params }: BickPageProps) {
           />
         </div>
       </div>
-      
+
       {/* Additional Share Options */}
       <SharePanel
         bickId={bick.id}
         bickUrl={canonicalUrl}
         bickTitle={bick.title}
-        className="mt-4"
+        className="mt-6"
       />
-      
+
       {/* Stats */}
-      <div className="mt-6 flex items-center gap-6 text-sm text-[#a0a0a0]">
+      <div className="mt-8 flex items-center gap-8 text-sm text-gray-500 font-medium">
         <span className="flex items-center gap-2">
-          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z" />
           </svg>
           {bick.play_count.toLocaleString()} plays
         </span>
         <span className="flex items-center gap-2">
-          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/>
+          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z" />
           </svg>
           {bick.share_count.toLocaleString()} shares
         </span>

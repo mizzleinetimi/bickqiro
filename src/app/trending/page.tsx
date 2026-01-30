@@ -13,35 +13,37 @@ export default async function TrendingPage() {
   const { bicks, nextCursor } = await getTrendingBicksPaginated({ limit: 20 });
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a]">
-      <div className="max-w-6xl mx-auto px-4 py-12">
+    <div className="min-h-screen bg-background">
+      <div className="max-w-6xl mx-auto px-4 py-16">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">
-            <span className="text-[#FCD34D]">Trending</span> Sounds
+        <div className="mb-12 text-center md:text-left">
+          <h1 className="text-4xl md:text-5xl font-bold text-white mb-4 tracking-tight">
+            Explore <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-primary to-brand-yellow-to">Bicks</span>
           </h1>
-          <p className="text-gray-400">The most popular sounds right now.</p>
+          <p className="text-gray-400 text-lg">Discover trending audio clips and find your next favorite sound.</p>
         </div>
-        
-        {/* Tabs */}
-        <div className="flex items-center gap-2 mb-8">
-          <Link
-            href="/"
-            className="px-4 py-2 rounded-full bg-[#1a1a1a] text-gray-400 hover:text-white text-sm font-medium transition-colors"
-          >
-            Latest
-          </Link>
-          <Link
-            href="/trending"
-            className="px-4 py-2 rounded-full bg-[#EF4444] text-white text-sm font-medium"
-          >
-            Trending
-          </Link>
+
+        {/* Filter Bar (Centered like reference) */}
+        <div className="flex justify-center mb-12">
+          <div className="bg-surface border border-surface-border p-1.5 rounded-2xl flex items-center gap-2">
+            <Link
+              href="/"
+              className="px-6 py-2.5 rounded-xl text-gray-400 hover:text-white text-sm font-medium transition-colors"
+            >
+              Latest
+            </Link>
+            <Link
+              href="/trending"
+              className="px-6 py-2.5 rounded-xl bg-brand-primary text-white text-sm font-bold shadow-lg shadow-brand-primary/20"
+            >
+              🔥 Trending
+            </Link>
+          </div>
         </div>
-        
+
         {/* Popular Tags Section */}
         <PopularTags limit={12} title="Browse by Tag" />
-        
+
         <TrendingResults initialBicks={bicks} initialCursor={nextCursor} />
       </div>
     </div>

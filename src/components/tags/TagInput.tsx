@@ -1,36 +1,21 @@
 'use client';
 
 /**
- * TagInput Component
- * 
- * A reusable component for adding and managing tags.
- * Used in both upload flow and bick editing.
- * Supports optional autocomplete suggestions.
- * 
- * @requirements 1.1, 1.2, 1.3, 1.4, 1.5, 1.6
+ * TagInput Component - Dark Theme
  */
 
 import { useState, useCallback, KeyboardEvent, useRef } from 'react';
 import { TagAutocomplete } from './TagAutocomplete';
 
 interface TagInputProps {
-  /** Currently selected tags */
   value: string[];
-  /** Callback when tags change */
   onChange: (tags: string[]) => void;
-  /** Maximum number of tags allowed */
   maxTags?: number;
-  /** Whether the input is disabled */
   disabled?: boolean;
-  /** Placeholder text */
   placeholder?: string;
-  /** Whether to show autocomplete suggestions */
   showAutocomplete?: boolean;
 }
 
-/**
- * Validate tag format - alphanumeric, hyphens, and spaces only
- */
 function isValidTagFormat(tag: string): boolean {
   return /^[a-zA-Z0-9\s-]+$/.test(tag) && tag.trim().length > 0;
 }
@@ -50,34 +35,26 @@ export function TagInput({
 
   const addTag = useCallback((tagName: string) => {
     const trimmed = tagName.trim();
-    
-    // Clear any previous error
     setError(null);
     
-    // Validate tag
-    if (!trimmed) {
-      return;
-    }
+    if (!trimmed) return;
     
     if (!isValidTagFormat(trimmed)) {
       setError('Tags can only contain letters, numbers, spaces, and hyphens');
       return;
     }
     
-    // Check for duplicates (case-insensitive)
     const normalizedTag = trimmed.toLowerCase();
     if (value.some(t => t.toLowerCase() === normalizedTag)) {
       setInputValue('');
-      return; // Silently ignore duplicates
+      return;
     }
     
-    // Check max tags
     if (value.length >= maxTags) {
       setError(`Maximum ${maxTags} tags allowed`);
       return;
     }
     
-    // Add the tag
     onChange([...value, trimmed]);
     setInputValue('');
   }, [value, onChange, maxTags]);
@@ -90,12 +67,10 @@ export function TagInput({
   }, [value, onChange]);
 
   const handleKeyDown = useCallback((e: KeyboardEvent<HTMLInputElement>) => {
-    // Don't handle Enter if autocomplete is open (let it handle selection)
     if (e.key === 'Enter' && !isAutocompleteOpen) {
       e.preventDefault();
       addTag(inputValue);
     } else if (e.key === 'Backspace' && !inputValue && value.length > 0) {
-      // Remove last tag on backspace when input is empty
       removeTag(value.length - 1);
     } else if (e.key === 'Escape') {
       setIsAutocompleteOpen(false);
@@ -110,7 +85,6 @@ export function TagInput({
     const newValue = e.target.value;
     setInputValue(newValue);
     setError(null);
-    // Open autocomplete when typing 2+ characters
     if (showAutocomplete && newValue.length >= 2) {
       setIsAutocompleteOpen(true);
     } else {
@@ -132,20 +106,19 @@ export function TagInput({
 
   return (
     <div className="space-y-2">
-      {/* Selected tags */}
       {value.length > 0 && (
         <div className="flex flex-wrap gap-2">
           {value.map((tag, index) => (
             <span
               key={`${tag}-${index}`}
-              className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-sm"
+              className="inline-flex items-center gap-1 px-3 py-1 bg-[#F97316]/20 text-[#F97316] rounded-full text-sm font-medium"
             >
               {tag}
               {!disabled && (
                 <button
                   type="button"
                   onClick={() => removeTag(index)}
-                  className="hover:bg-blue-200 rounded-full p-0.5"
+                  className="hover:bg-[#F97316]/30 rounded-full p-0.5 transition-colors"
                   aria-label={`Remove ${tag}`}
                 >
                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -158,7 +131,6 @@ export function TagInput({
         </div>
       )}
 
-      {/* Input field with autocomplete */}
       <div className="relative">
         <div className="flex gap-2">
           <input
@@ -174,19 +146,18 @@ export function TagInput({
             }}
             disabled={disabled || value.length >= maxTags}
             placeholder={value.length >= maxTags ? `Maximum ${maxTags} tags` : placeholder}
-            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+            className="flex-1 px-4 py-2 border border-[#262626] rounded-lg bg-[#1a1a1a] text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#EF4444] focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           />
           <button
             type="button"
             onClick={handleAddClick}
             disabled={disabled || !inputValue.trim() || value.length >= maxTags}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+            className="px-4 py-2 bg-[#EF4444] text-white rounded-lg hover:bg-[#DC2626] disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
           >
             Add
           </button>
         </div>
 
-        {/* Autocomplete dropdown */}
         {showAutocomplete && (
           <TagAutocomplete
             query={inputValue}
@@ -199,15 +170,9 @@ export function TagInput({
         )}
       </div>
 
-      {/* Error message */}
-      {error && (
-        <p className="text-sm text-red-600">{error}</p>
-      )}
+      {error && <p className="text-sm text-red-400">{error}</p>}
 
-      {/* Tag count */}
-      <p className="text-xs text-gray-500">
-        {value.length}/{maxTags} tags
-      </p>
+      <p className="text-xs text-gray-500">{value.length}/{maxTags} tags</p>
     </div>
   );
 }

@@ -313,7 +313,7 @@ export async function getTrendingBicks(limit: number = 10): Promise<Bick[]> {
 
 /**
  * Fetch latest bicks for homepage
- * Returns most recently published live bicks
+ * Returns most recently published live bicks with tags
  */
 export async function getLatestBicks(limit: number = 12): Promise<BickWithAssets[]> {
   const supabase = await createClient();
@@ -329,7 +329,117 @@ export async function getLatestBicks(limit: number = 12): Promise<BickWithAssets
     .limit(limit);
 
   if (error || !bicks) return [];
-  return bicks as BickWithAssets[];
+  
+  // Fetch tags for each bick
+  const bicksWithTags = await Promise.all(
+    (bicks as BickWithAssets[]).map(async (bick) => {
+      const tags = await getBickTags(bick.id);
+      return { ...bick, tags: tags as Tag[] };
+    })
+  );
+  
+  return bicksWithTags;
+}
+
+/**
+ * Latest cursor for pagination
+ */
+interface LatestCursor {
+  published_at: string;
+  id: string;
+}
+
+/**
+ * Decode a base64 cursor into LatestCursor
+ */
+function decodeLatestCursor(cursor: string): LatestCursor | null {
+  try {
+    const decoded = Buffer.from(cursor, 'base64').toString('utf-8');
+    const parsed = JSON.parse(decoded);
+    if (typeof parsed.published_at === 'string' && typeof parsed.id === 'string') {
+      return parsed as LatestCursor;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Encode a LatestCursor to base64
+ */
+function encodeLatestCursor(cursor: LatestCursor): string {
+  return Buffer.from(JSON.stringify(cursor)).toString('base64');
+}
+
+/**
+ * Latest result with pagination
+ */
+export interface LatestResult {
+  bicks: BickWithAssets[];
+  nextCursor: string | null;
+}
+
+/**
+ * Get latest bicks with pagination
+ * Uses cursor-based pagination for efficiency
+ */
+export async function getLatestBicksPaginated(options: { cursor?: string; limit?: number } = {}): Promise<LatestResult> {
+  const { cursor, limit = 20 } = options;
+  const supabase = await createClient();
+  
+  // Parse cursor if provided
+  let cursorData: LatestCursor | null = null;
+  if (cursor) {
+    cursorData = decodeLatestCursor(cursor);
+  }
+
+  // Build query
+  let query = supabase
+    .from('bicks')
+    .select(`
+      *,
+      assets:bick_assets(*)
+    `)
+    .eq('status', 'live')
+    .order('published_at', { ascending: false })
+    .order('id', { ascending: false })
+    .limit(limit + 1);
+
+  // Apply cursor filter
+  if (cursorData) {
+    query = query.or(`published_at.lt.${cursorData.published_at},and(published_at.eq.${cursorData.published_at},id.lt.${cursorData.id})`);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.error('Latest query error:', error);
+    return { bicks: [], nextCursor: null };
+  }
+
+  const results = (data || []) as BickWithAssets[];
+  const hasMore = results.length > limit;
+  const bicks = hasMore ? results.slice(0, limit) : results;
+  
+  let nextCursor: string | null = null;
+  if (hasMore && bicks.length > 0) {
+    const lastBick = bicks[bicks.length - 1];
+    nextCursor = encodeLatestCursor({
+      published_at: lastBick.published_at || lastBick.created_at,
+      id: lastBick.id
+    });
+  }
+
+  // Fetch tags for each bick
+  const bicksWithTags = await Promise.all(
+    bicks.map(async (bick) => {
+      const tags = await getBickTags(bick.id);
+      return { ...bick, tags: tags as Tag[] };
+    })
+  );
+
+  return { bicks: bicksWithTags, nextCursor };
 }
 
 
@@ -535,12 +645,20 @@ export async function getTrendingBicksPaginated(options: TrendingOptions = {}): 
     });
   }
 
-  return { bicks, nextCursor };
+  // Fetch tags for each bick
+  const bicksWithTags = await Promise.all(
+    bicks.map(async (bick) => {
+      const tags = await getBickTags(bick.id);
+      return { ...bick, tags: tags as Tag[] };
+    })
+  );
+
+  return { bicks: bicksWithTags, nextCursor };
 }
 
 /**
  * Get top N trending bicks (for homepage)
- * Simple limit-based query without pagination
+ * Simple limit-based query without pagination, includes tags
  */
 export async function getTopTrendingBicks(limit: number = 6): Promise<TrendingBick[]> {
   const supabase = await createClient();
@@ -563,12 +681,20 @@ export async function getTopTrendingBicks(limit: number = 6): Promise<TrendingBi
     return [];
   }
 
-  // Transform results to TrendingBick format
-  return (data || []).map((row: { score: number; rank: number; bick: BickWithAssets }) => ({
-    ...row.bick,
-    trending_score: row.score,
-    trending_rank: row.rank
-  }));
+  // Transform results to TrendingBick format and fetch tags
+  const trendingBicks = await Promise.all(
+    (data || []).map(async (row: { score: number; rank: number; bick: BickWithAssets }) => {
+      const tags = await getBickTags(row.bick.id);
+      return {
+        ...row.bick,
+        tags: tags as Tag[],
+        trending_score: row.score,
+        trending_rank: row.rank
+      };
+    })
+  );
+  
+  return trendingBicks;
 }
 
 

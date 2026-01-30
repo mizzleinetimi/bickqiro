@@ -1,10 +1,14 @@
 /**
  * TagDisplay Component
  * 
- * Renders tags as clickable links, used on bick cards and detail pages.
+ * Renders tags as clickable links or spans, used on bick cards and detail pages.
+ * Use asSpan={true} when inside another link to avoid nested <a> tags.
  */
 
+'use client';
+
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 interface Tag {
   name: string;
@@ -14,22 +18,28 @@ interface Tag {
 interface TagDisplayProps {
   tags: Tag[];
   maxVisible?: number;
-  size?: 'sm' | 'md';
+  size?: 'xs' | 'sm' | 'md';
   showAll?: boolean;
+  theme?: 'default' | 'orange';
+  /** Render as spans instead of links (use when inside a parent Link) */
+  asSpan?: boolean;
 }
 
 // Tag color palette for variety
-const tagColors = [
-  'bg-[#3B82F6]/20 text-[#60A5FA] hover:bg-[#3B82F6]/30', // blue
-  'bg-[#8B5CF6]/20 text-[#A78BFA] hover:bg-[#8B5CF6]/30', // purple
-  'bg-[#EC4899]/20 text-[#F472B6] hover:bg-[#EC4899]/30', // pink
-  'bg-[#10B981]/20 text-[#34D399] hover:bg-[#10B981]/30', // green
-  'bg-[#F59E0B]/20 text-[#FBBF24] hover:bg-[#F59E0B]/30', // amber
-  'bg-[#EF4444]/20 text-[#F87171] hover:bg-[#EF4444]/30', // red
+const defaultColors = [
+  'bg-white/5 text-gray-300 hover:bg-white/10',
 ];
 
-function getTagColor(index: number): string {
-  return tagColors[index % tagColors.length];
+const orangeColors = [
+  'bg-brand-primary/10 text-brand-primary border border-brand-primary/20 hover:bg-brand-primary/20',
+  'bg-brand-accent/10 text-brand-accent border border-brand-accent/20 hover:bg-brand-accent/20',
+];
+
+function getTagColor(index: number, theme: 'default' | 'orange'): string {
+  if (theme === 'orange') {
+    return orangeColors[index % orangeColors.length];
+  }
+  return defaultColors[index % defaultColors.length];
 }
 
 export function TagDisplay({
@@ -37,7 +47,11 @@ export function TagDisplay({
   maxVisible = 3,
   size = 'sm',
   showAll = false,
+  theme = 'default',
+  asSpan = false,
 }: TagDisplayProps) {
+  const router = useRouter();
+
   if (!tags || tags.length === 0) {
     return null;
   }
@@ -46,23 +60,40 @@ export function TagDisplay({
   const remainingCount = showAll ? 0 : Math.max(0, tags.length - maxVisible);
 
   const sizeClasses = {
-    sm: 'px-2 py-0.5 text-xs',
-    md: 'px-3 py-1 text-sm',
+    xs: 'px-2 py-1 text-[10px] font-bold rounded-md',
+    sm: 'px-2 py-1 text-xs font-medium rounded-full',
+    md: 'px-3 py-1.5 text-sm font-medium rounded-full',
+  };
+
+  const handleTagClick = (e: React.MouseEvent, slug: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    router.push(`/tag/${slug}`);
   };
 
   return (
-    <div className="flex flex-wrap gap-1.5">
-      {visibleTags.map((tag, index) => (
-        <Link
-          key={tag.slug}
-          href={`/tag/${tag.slug}`}
-          className={`${sizeClasses[size]} ${getTagColor(index)} rounded-full transition-colors`}
-        >
-          {tag.name}
-        </Link>
-      ))}
+    <div className="flex flex-wrap gap-2">
+      {visibleTags.map((tag, index) => 
+        asSpan ? (
+          <span
+            key={tag.slug}
+            onClick={(e) => handleTagClick(e, tag.slug)}
+            className={`${sizeClasses[size]} ${getTagColor(index, theme)} transition-colors cursor-pointer`}
+          >
+            #{tag.name}
+          </span>
+        ) : (
+          <Link
+            key={tag.slug}
+            href={`/tag/${tag.slug}`}
+            className={`${sizeClasses[size]} ${getTagColor(index, theme)} transition-colors`}
+          >
+            #{tag.name}
+          </Link>
+        )
+      )}
       {remainingCount > 0 && (
-        <span className={`${sizeClasses[size]} bg-[#2a2a2a] text-[#666666] rounded-full`}>
+        <span className={`${sizeClasses[size]} bg-surface-border text-gray-500 rounded-md`}>
           +{remainingCount}
         </span>
       )}

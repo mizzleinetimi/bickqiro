@@ -1,75 +1,34 @@
 /**
  * GET /api/tags/popular
  * 
- * Get popular tags ordered by bick_count descending.
- * Returns tags with bick_count > 0.
- * 
- * @requirements 9.2, 6.1, 6.2
+ * Returns popular tags ordered by bick count.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/server';
 
-interface PopularTag {
-  id: string;
-  name: string;
-  slug: string;
-  bick_count: number;
-}
+export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const limit = parseInt(searchParams.get('limit') || '12', 10);
 
-interface PopularTagsResponse {
-  success: true;
-  tags: PopularTag[];
-}
-
-interface PopularTagsErrorResponse {
-  success: false;
-  error: string;
-}
-
-type Response = PopularTagsResponse | PopularTagsErrorResponse;
-
-export async function GET(
-  request: NextRequest
-): Promise<NextResponse<Response>> {
   try {
-    const searchParams = request.nextUrl.searchParams;
-    const limitParam = searchParams.get('limit');
+    const supabase = createAdminClient();
     
-    // Parse limit (default 12, max 50)
-    let limit = 12;
-    if (limitParam) {
-      const parsed = parseInt(limitParam, 10);
-      if (!isNaN(parsed) && parsed > 0 && parsed <= 50) {
-        limit = parsed;
-      }
-    }
-    
-    const supabase = await createClient();
-    
-    // Call the get_popular_tags function
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data, error } = await (supabase.rpc as any)('get_popular_tags', {
-      result_limit: limit,
-    });
-    
+    const { data, error } = await supabase
+      .from('tags')
+      .select('id, name, slug, bick_count')
+      .gt('bick_count', 0)
+      .order('bick_count', { ascending: false })
+      .limit(limit);
+
     if (error) {
-      console.error('Popular tags error:', error);
-      return NextResponse.json(
-        { success: false, error: 'Failed to fetch popular tags' },
-        { status: 500 }
-      );
+      console.error('Failed to fetch popular tags:', error);
+      return NextResponse.json({ tags: [] });
     }
-    
-    return NextResponse.json({
-      success: true,
-      tags: (data || []) as PopularTag[],
-    });
+
+    return NextResponse.json({ tags: data || [] });
   } catch (error) {
-    console.error('Popular tags error:', error);
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    );
+    console.error('Error fetching popular tags:', error);
+    return NextResponse.json({ tags: [] });
   }
 }
