@@ -40,6 +40,7 @@ interface ExtractionResponse {
 
 async function extractAudio(url: string): Promise<ExtractionResponse> {
   const tempId = randomUUID();
+  const outputTemplate = `/tmp/${tempId}`;
   const outputPath = `/tmp/${tempId}.mp3`;
   const infoPath = `/tmp/${tempId}.json`;
 
@@ -50,33 +51,55 @@ async function extractAudio(url: string): Promise<ExtractionResponse> {
     let thumbnailUrl: string | undefined;
 
     try {
-      await execAsync(`yt-dlp --dump-json "${url}" > "${infoPath}"`, { timeout: 30000 });
-      const infoContent = await readFile(infoPath, 'utf-8');
-      const infoJson = JSON.parse(infoContent);
+      console.log(`[API] Fetching video info for: ${url}`);
+      const { stdout, stderr } = await execAsync(`yt-dlp --dump-json "${url}"`, { timeout: 60000 });
+      const infoJson = JSON.parse(stdout);
       title = infoJson.title;
       durationMs = Math.round((infoJson.duration || 0) * 1000);
       thumbnailUrl = infoJson.thumbnail;
+      console.log(`[API] Video info: title="${title}", duration=${durationMs}ms`);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
+      console.error(`[API] Failed to get video info: ${errorMessage}`);
       if (errorMessage.includes('Video unavailable') || errorMessage.includes('Private video')) {
         return { success: false, error: 'Video is unavailable or private', code: 'VIDEO_UNAVAILABLE' };
       }
       return { success: false, error: 'Failed to fetch video information', code: 'EXTRACTION_FAILED' };
     }
 
-    // Extract audio
+    // Extract audio - use template without extension, yt-dlp adds it
     try {
-      await execAsync(
-        `yt-dlp -x --audio-format mp3 --audio-quality 0 -o "${outputPath}" "${url}"`,
+      console.log(`[API] Extracting audio to: ${outputPath}`);
+      const { stdout, stderr } = await execAsync(
+        `yt-dlp -x --audio-format mp3 --audio-quality 0 -o "${outputTemplate}.%(ext)s" "${url}"`,
         { timeout: 120000 }
       );
+      console.log(`[API] yt-dlp stdout: ${stdout}`);
+      if (stderr) console.log(`[API] yt-dlp stderr: ${stderr}`);
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.error(`[API] Failed to extract audio: ${errorMessage}`);
       return { success: false, error: 'Failed to extract audio', code: 'EXTRACTION_FAILED' };
     }
 
+    // Check if file exists
+    let audioBuffer: Buffer;
+    try {
+      audioBuffer = await readFile(outputPath);
+      console.log(`[API] Audio file size: ${audioBuffer.length} bytes`);
+    } catch (error) {
+      console.error(`[API] Audio file not found at ${outputPath}`);
+      // Try to find any mp3 file with our tempId
+      try {
+        const { stdout } = await execAsync(`ls -la /tmp/${tempId}*`);
+        console.log(`[API] Files in /tmp: ${stdout}`);
+      } catch {}
+      return { success: false, error: 'Audio file not created', code: 'EXTRACTION_FAILED' };
+    }
+
     // Upload to R2
-    const audioBuffer = await readFile(outputPath);
     const storageKey = `extracted/${tempId}.mp3`;
+    console.log(`[API] Uploading to R2: ${storageKey}`);
     
     await r2Client.send(new PutObjectCommand({
       Bucket: process.env.R2_BUCKET_NAME!,
@@ -86,6 +109,7 @@ async function extractAudio(url: string): Promise<ExtractionResponse> {
     }));
 
     const cdnUrl = `${process.env.NEXT_PUBLIC_CDN_URL}/${storageKey}`;
+    console.log(`[API] Upload complete: ${cdnUrl}`);
 
     // Cleanup
     await unlink(outputPath).catch(() => {});
@@ -103,9 +127,11 @@ async function extractAudio(url: string): Promise<ExtractionResponse> {
     await unlink(outputPath).catch(() => {});
     await unlink(infoPath).catch(() => {});
     
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error(`[API] Extraction error: ${errorMessage}`);
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
+      error: errorMessage,
       code: 'EXTRACTION_FAILED',
     };
   }
