@@ -238,7 +238,13 @@ const server = createServer(async (req: IncomingMessage, res: ServerResponse) =>
 });
 
 export function startApiServer() {
-  server.listen(PORT, () => {
+  console.log(`[API] Starting API server on port ${PORT}...`);
+  
+  server.on('error', (err) => {
+    console.error(`[API] Server error:`, err);
+  });
+  
+  server.listen(Number(PORT), '0.0.0.0', () => {
     console.log(`[API] Extraction API listening on port ${PORT}`);
   });
 }
