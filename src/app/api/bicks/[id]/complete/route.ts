@@ -211,10 +211,11 @@ export async function POST(
       jobId = await enqueueBickProcessing(jobPayload);
     } catch (queueError) {
       console.error('Error enqueuing processing job:', queueError);
+      const errorMessage = queueError instanceof Error ? queueError.message : 'Unknown queue error';
       return NextResponse.json(
         {
           success: false,
-          error: 'Failed to enqueue processing job',
+          error: `Failed to enqueue processing job: ${errorMessage}`,
           code: 'QUEUE_ERROR',
         },
         { status: 500 }
