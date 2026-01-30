@@ -1,9 +1,14 @@
-import Link from 'next/link';
-import type { Bick, Tag } from '@/types/database.types';
+'use client';
+
+import { useState, useRef, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import Image from 'next/image';
+import type { Bick, Tag, BickAsset } from '@/types/database.types';
 import { TagDisplay } from '@/components/tags/TagDisplay';
+import { Download } from 'lucide-react';
 
 interface BickCardProps {
-  bick: Bick & { tags?: Tag[] };
+  bick: Bick & { tags?: Tag[]; assets?: BickAsset[]; owner?: { username?: string; display_name?: string | null } | null };
   variant?: 'default' | 'featured';
   showTrending?: boolean;
 }
@@ -17,63 +22,234 @@ function formatDuration(ms: number | null): string {
   return `${mins}:${secs.toString().padStart(2, '0')}`;
 }
 
+function formatPlayCount(count: number): string {
+  if (count >= 1000000) return `${(count / 1000000).toFixed(1)}M`;
+  if (count >= 1000) return `${(count / 1000).toFixed(1)}K`;
+  return count.toString();
+}
+
+const DEFAULT_THUMBNAIL = '/brand-thumb.jpg';
+
 export function BickCard({ bick, variant = 'default', showTrending = false }: BickCardProps) {
+  const router = useRouter();
   const isFeatured = variant === 'featured';
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   
+  // Get audio URL from assets - check both 'audio' and 'original' types
+  const audioAsset = bick.assets?.find(a => a.asset_type === 'audio' || a.asset_type === 'original');
+  const audioUrl = audioAsset?.cdn_url;
+  
+  // Get thumbnail URL - priority: thumbnail asset > og_image > default
+  const thumbnailAsset = bick.assets?.find(a => a.asset_type === 'thumbnail');
+  const ogImageAsset = bick.assets?.find(a => a.asset_type === 'og_image');
+  const thumbnailUrl = thumbnailAsset?.cdn_url || ogImageAsset?.cdn_url || DEFAULT_THUMBNAIL;
+  
+  // Get owner display name
+  const ownerName = bick.owner?.display_name || bick.owner?.username || 'Anonymous';
+
+  // Handle audio time updates
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    const handleTimeUpdate = () => {
+      if (audio.duration) {
+        setProgress((audio.currentTime / audio.duration) * 100);
+      }
+    };
+
+    const handleEnded = () => {
+      setIsPlaying(false);
+      setProgress(0);
+    };
+
+    audio.addEventListener('timeupdate', handleTimeUpdate);
+    audio.addEventListener('ended', handleEnded);
+
+    return () => {
+      audio.removeEventListener('timeupdate', handleTimeUpdate);
+      audio.removeEventListener('ended', handleEnded);
+    };
+  }, []);
+
+  // Cleanup audio on unmount
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+    };
+  }, []);
+
+  const handleCardClick = () => {
+    router.push(`/bick/${bick.slug}-${bick.id}`);
+  };
+
+  const handlePlayClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    if (!audioUrl) return;
+
+    if (!audioRef.current) {
+      audioRef.current = new Audio(audioUrl);
+      audioRef.current.addEventListener('timeupdate', () => {
+        if (audioRef.current?.duration) {
+          setProgress((audioRef.current.currentTime / audioRef.current.duration) * 100);
+        }
+      });
+      audioRef.current.addEventListener('ended', () => {
+        setIsPlaying(false);
+        setProgress(0);
+      });
+    }
+
+    if (isPlaying) {
+      audioRef.current.pause();
+      setIsPlaying(false);
+    } else {
+      audioRef.current.play().catch(() => {});
+      setIsPlaying(true);
+    }
+  };
+
+  const handleDownloadClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!audioUrl) return;
+    
+    const link = document.createElement('a');
+    link.href = audioUrl;
+    link.download = `${bick.slug}.mp3`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
-    <Link
-      href={`/bick/${bick.slug}-${bick.id}`}
-      className={`group block p-5 bg-surface rounded-xl border border-surface-border hover:border-surface-border/80 hover:bg-surface-hover transition-all duration-300 relative overflow-hidden ${
+    <div
+      onClick={handleCardClick}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => e.key === 'Enter' && handleCardClick()}
+      className={`group flex gap-4 p-4 bg-surface rounded-xl border border-surface-border hover:border-surface-border/80 hover:bg-surface-hover transition-all duration-300 relative overflow-hidden cursor-pointer ${
         isFeatured ? 'ring-2 ring-brand-accent/30' : ''
       }`}
     >
-      {/* Trending Badge */}
-      {showTrending && (
-        <div className="absolute top-3 right-3 px-2 py-1 bg-brand-primary/20 rounded-full">
-          <span className="text-xs font-bold text-brand-primary">🔥 Trending</span>
+      {/* Progress bar when playing */}
+      {isPlaying && (
+        <div className="absolute bottom-0 left-0 right-0 h-1 bg-gray-800">
+          <div 
+            className="h-full bg-gradient-to-r from-brand-primary to-brand-accent transition-all duration-100"
+            style={{ width: `${progress}%` }}
+          />
         </div>
       )}
 
-      {/* Top Row: Title & Play Button */}
-      <div className="flex items-start justify-between gap-4 mb-4">
-        <h3 className="font-bold text-white text-lg leading-tight line-clamp-2 group-hover:text-brand-primary transition-colors flex-1">
-          {bick.title}
-        </h3>
+      {/* Thumbnail with Play Button Overlay */}
+      <div className="relative flex-shrink-0 w-20 h-20 sm:w-24 sm:h-24 rounded-lg overflow-hidden bg-gray-800">
+        <Image
+          src={thumbnailUrl}
+          alt={bick.title}
+          fill
+          className="object-cover"
+          sizes="(max-width: 640px) 80px, 96px"
+        />
+        
+        {/* Play Button Overlay */}
+        <button
+          type="button"
+          onClick={handlePlayClick}
+          disabled={!audioUrl}
+          className={`absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 disabled:cursor-not-allowed ${
+            isPlaying ? 'opacity-100' : ''
+          }`}
+          aria-label={isPlaying ? 'Pause' : 'Play'}
+        >
+          <div className={`w-10 h-10 rounded-full bg-gradient-to-br from-brand-yellow-from to-brand-yellow-to flex items-center justify-center shadow-lg transition-transform duration-200 hover:scale-110 ${
+            isPlaying ? 'ring-2 ring-white/50' : ''
+          }`}>
+            {isPlaying ? (
+              <svg className="w-5 h-5 text-black" fill="currentColor" viewBox="0 0 20 20">
+                <rect x="6" y="5" width="3" height="10" rx="1" />
+                <rect x="11" y="5" width="3" height="10" rx="1" />
+              </svg>
+            ) : (
+              <svg className="w-5 h-5 text-black ml-0.5" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
+              </svg>
+            )}
+          </div>
+        </button>
 
-        {/* Play Button (Yellow/Orange Gradient) */}
-        <div className="flex-shrink-0 w-11 h-11 rounded-full bg-gradient-to-br from-brand-yellow-from to-brand-yellow-to flex items-center justify-center shadow-lg shadow-brand-accent/20 group-hover:scale-110 group-hover:shadow-brand-accent/40 transition-all duration-300">
-          <svg className="w-5 h-5 text-black ml-0.5" fill="currentColor" viewBox="0 0 20 20">
-            <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
-          </svg>
-        </div>
-      </div>
+        {/* Trending Badge */}
+        {showTrending && (
+          <div className="absolute top-1 left-1 px-1.5 py-0.5 bg-brand-primary/90 rounded text-[10px] font-bold text-white">
+            🔥
+          </div>
+        )}
 
-      {/* Middle: Tags */}
-      {bick.tags && bick.tags.length > 0 && (
-        <div className="mb-4">
-          <TagDisplay tags={bick.tags} maxVisible={3} size="xs" theme="orange" asSpan />
-        </div>
-      )}
-
-      {/* Bottom: Stats */}
-      <div className="flex items-center gap-4 text-xs text-gray-500 font-medium">
-        {/* View/Play Count */}
-        <span className="flex items-center gap-1.5">
-          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-          </svg>
-          {bick.play_count.toLocaleString()}
-        </span>
-
-        {/* Duration */}
-        <span className="flex items-center gap-1.5">
-          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
-          </svg>
+        {/* Duration Badge */}
+        <div className="absolute bottom-1 right-1 px-1.5 py-0.5 bg-black/70 rounded text-[10px] font-medium text-white">
           {formatDuration(bick.duration_ms)}
-        </span>
+        </div>
       </div>
-    </Link>
+
+      {/* Content */}
+      <div className="flex-1 min-w-0 flex flex-col justify-between">
+        {/* Top: Title & Username */}
+        <div>
+          <h3 className="font-semibold text-white text-sm sm:text-base leading-tight line-clamp-2 group-hover:text-brand-primary transition-colors">
+            {bick.title}
+          </h3>
+          <p className="text-xs text-gray-400 mt-1 truncate">
+            {ownerName}
+          </p>
+        </div>
+
+        {/* Tags (if any) */}
+        {bick.tags && bick.tags.length > 0 && (
+          <div className="mt-2 hidden sm:block">
+            <TagDisplay tags={bick.tags} maxVisible={2} size="xs" theme="orange" asSpan />
+          </div>
+        )}
+
+        {/* Bottom: Stats & Actions */}
+        <div className="flex items-center justify-between mt-2">
+          <div className="flex items-center gap-3 text-xs text-gray-500">
+            {/* Play Count */}
+            <span className="flex items-center gap-1">
+              <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
+              </svg>
+              {formatPlayCount(bick.play_count)}
+            </span>
+
+            {/* Playing indicator */}
+            {isPlaying && (
+              <span className="flex items-center gap-1 text-brand-accent">
+                <span className="flex gap-0.5">
+                  <span className="w-0.5 h-2.5 bg-brand-accent rounded-full animate-pulse" />
+                  <span className="w-0.5 h-2.5 bg-brand-accent rounded-full animate-pulse" style={{ animationDelay: '0.2s' }} />
+                  <span className="w-0.5 h-2.5 bg-brand-accent rounded-full animate-pulse" style={{ animationDelay: '0.4s' }} />
+                </span>
+              </span>
+            )}
+          </div>
+
+          {/* Download Button */}
+          <button
+            type="button"
+            onClick={handleDownloadClick}
+            disabled={!audioUrl}
+            className="p-1.5 text-gray-400 hover:text-white hover:bg-gray-700 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            aria-label="Download"
+          >
+            <Download className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }

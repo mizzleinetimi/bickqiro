@@ -220,3 +220,16 @@
   - Header now has Upload, Explore, My Bicks nav with lucide icons
   - Mobile navigation shows at bottom on smaller screens
   - R2 bucket: bickqr-uploads, Redis via Railway
+
+## 2026-01-30 (continued)
+- **Goal**: Add thumbnails to BickCard component
+- **Outputs produced**:
+  - src/components/bick/BickCard.tsx (redesigned with thumbnail, owner name, download button)
+  - src/lib/supabase/queries.ts (updated queries to include owner profile data)
+  - src/app/auth/sign-in/page.tsx (refactored with Suspense boundary)
+  - src/app/auth/sign-in/SignInContent.tsx (extracted client component)
+- **Result**: Success - BickCard now shows thumbnail, owner name, play/share counts, download button
+- **Notes**: 
+  - Thumbnail priority: thumbnail asset > og_image > default brand-thumb.jpg
+  - Owner info now fetched in getLatestBicks, getTopTrendingBicks, and paginated variants
+  - Fixed Next.js build error with useSearchParams requiring Suspense boundary

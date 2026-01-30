@@ -96,6 +96,41 @@ async function seed() {
     }
   }
 
+  // Create bick_assets (audio files) - using sample audio URLs for testing
+  const sampleAudioUrl = 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3';
+  const bickAssets = [
+    {
+      id: 'aaaaaaaa-0001-0000-0000-000000000001',
+      bick_id: '10000000-0000-0000-0000-000000000001',
+      asset_type: 'audio',
+      cdn_url: sampleAudioUrl,
+      mime_type: 'audio/mpeg',
+    },
+    {
+      id: 'aaaaaaaa-0001-0000-0000-000000000002',
+      bick_id: '10000000-0000-0000-0000-000000000002',
+      asset_type: 'audio',
+      cdn_url: sampleAudioUrl,
+      mime_type: 'audio/mpeg',
+    },
+    {
+      id: 'aaaaaaaa-0001-0000-0000-000000000003',
+      bick_id: '10000000-0000-0000-0000-000000000003',
+      asset_type: 'audio',
+      cdn_url: sampleAudioUrl,
+      mime_type: 'audio/mpeg',
+    },
+  ];
+
+  for (const asset of bickAssets) {
+    const { error } = await supabase.from('bick_assets').upsert(asset);
+    if (error) {
+      console.log(`Asset error:`, error.message);
+    } else {
+      console.log(`✅ Created audio asset for bick`);
+    }
+  }
+
   // Create bick_tags associations
   const bickTags = [
     { bick_id: '10000000-0000-0000-0000-000000000001', tag_id: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa' },
@@ -108,6 +143,40 @@ async function seed() {
     const { error } = await supabase.from('bick_tags').upsert(bt);
     if (!error) {
       console.log(`✅ Tagged bick`);
+    }
+  }
+
+  // Create bick_assets (audio files) - using public domain test audio
+  const assets = [
+    {
+      id: 'a0000000-0000-0000-0000-000000000001',
+      bick_id: '10000000-0000-0000-0000-000000000001',
+      asset_type: 'audio',
+      cdn_url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
+      mime_type: 'audio/mpeg',
+    },
+    {
+      id: 'a0000000-0000-0000-0000-000000000002',
+      bick_id: '10000000-0000-0000-0000-000000000002',
+      asset_type: 'audio',
+      cdn_url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
+      mime_type: 'audio/mpeg',
+    },
+    {
+      id: 'a0000000-0000-0000-0000-000000000003',
+      bick_id: '10000000-0000-0000-0000-000000000003',
+      asset_type: 'audio',
+      cdn_url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3',
+      mime_type: 'audio/mpeg',
+    },
+  ];
+
+  for (const asset of assets) {
+    const { error } = await supabase.from('bick_assets').upsert(asset);
+    if (error) {
+      console.log(`Asset error:`, error.message);
+    } else {
+      console.log(`✅ Created audio asset for bick`);
     }
   }
 

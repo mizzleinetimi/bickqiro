@@ -313,16 +313,17 @@ export async function getTrendingBicks(limit: number = 10): Promise<Bick[]> {
 
 /**
  * Fetch latest bicks for homepage
- * Returns most recently published live bicks with tags
+ * Returns most recently published live bicks with tags and owner
  */
-export async function getLatestBicks(limit: number = 12): Promise<BickWithAssets[]> {
+export async function getLatestBicks(limit: number = 12): Promise<BickWithOwner[]> {
   const supabase = await createClient();
   
   const { data: bicks, error } = await supabase
     .from('bicks')
     .select(`
       *,
-      assets:bick_assets(*)
+      assets:bick_assets(*),
+      owner:profiles(*)
     `)
     .eq('status', 'live')
     .order('published_at', { ascending: false })
@@ -332,7 +333,7 @@ export async function getLatestBicks(limit: number = 12): Promise<BickWithAssets
   
   // Fetch tags for each bick
   const bicksWithTags = await Promise.all(
-    (bicks as BickWithAssets[]).map(async (bick) => {
+    (bicks as BickWithOwner[]).map(async (bick) => {
       const tags = await getBickTags(bick.id);
       return { ...bick, tags: tags as Tag[] };
     })
@@ -376,7 +377,7 @@ function encodeLatestCursor(cursor: LatestCursor): string {
  * Latest result with pagination
  */
 export interface LatestResult {
-  bicks: BickWithAssets[];
+  bicks: BickWithOwner[];
   nextCursor: string | null;
 }
 
@@ -399,7 +400,8 @@ export async function getLatestBicksPaginated(options: { cursor?: string; limit?
     .from('bicks')
     .select(`
       *,
-      assets:bick_assets(*)
+      assets:bick_assets(*),
+      owner:profiles(*)
     `)
     .eq('status', 'live')
     .order('published_at', { ascending: false })
@@ -418,7 +420,7 @@ export async function getLatestBicksPaginated(options: { cursor?: string; limit?
     return { bicks: [], nextCursor: null };
   }
 
-  const results = (data || []) as BickWithAssets[];
+  const results = (data || []) as BickWithOwner[];
   const hasMore = results.length > limit;
   const bicks = hasMore ? results.slice(0, limit) : results;
   
@@ -608,7 +610,8 @@ export async function getTrendingBicksPaginated(options: TrendingOptions = {}): 
       rank,
       bick:bicks!inner(
         *,
-        assets:bick_assets(*)
+        assets:bick_assets(*),
+        owner:profiles(*)
       )
     `)
     .order('rank', { ascending: true })
@@ -627,7 +630,7 @@ export async function getTrendingBicksPaginated(options: TrendingOptions = {}): 
   }
 
   // Transform results to TrendingBick format
-  const results: TrendingBick[] = (data || []).map((row: { score: number; rank: number; bick: BickWithAssets }) => ({
+  const results: TrendingBick[] = (data || []).map((row: { score: number; rank: number; bick: BickWithOwner }) => ({
     ...row.bick,
     trending_score: row.score,
     trending_rank: row.rank
@@ -658,7 +661,7 @@ export async function getTrendingBicksPaginated(options: TrendingOptions = {}): 
 
 /**
  * Get top N trending bicks (for homepage)
- * Simple limit-based query without pagination, includes tags
+ * Simple limit-based query without pagination, includes tags and owner
  */
 export async function getTopTrendingBicks(limit: number = 6): Promise<TrendingBick[]> {
   const supabase = await createClient();
@@ -670,7 +673,8 @@ export async function getTopTrendingBicks(limit: number = 6): Promise<TrendingBi
       rank,
       bick:bicks!inner(
         *,
-        assets:bick_assets(*)
+        assets:bick_assets(*),
+        owner:profiles(*)
       )
     `)
     .order('rank', { ascending: true })
@@ -683,7 +687,7 @@ export async function getTopTrendingBicks(limit: number = 6): Promise<TrendingBi
 
   // Transform results to TrendingBick format and fetch tags
   const trendingBicks = await Promise.all(
-    (data || []).map(async (row: { score: number; rank: number; bick: BickWithAssets }) => {
+    (data || []).map(async (row: { score: number; rank: number; bick: BickWithOwner }) => {
       const tags = await getBickTags(row.bick.id);
       return {
         ...row.bick,

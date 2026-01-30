@@ -17,7 +17,18 @@ interface ExploreContentProps {
 export function ExploreContent({ initialLatestBicks, initialTrendingBicks }: ExploreContentProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<TabType>('latest');
-  const [bicks, setBicks] = useState<BickWithAssets[]>(initialLatestBicks);
+  
+  // Deduplicate bicks to prevent React key warnings
+  const deduplicateBicks = (bicks: BickWithAssets[]): BickWithAssets[] => {
+    const seen = new Set<string>();
+    return bicks.filter(b => {
+      if (seen.has(b.id)) return false;
+      seen.add(b.id);
+      return true;
+    });
+  };
+  
+  const [bicks, setBicks] = useState<BickWithAssets[]>(() => deduplicateBicks(initialLatestBicks));
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -61,9 +72,14 @@ export function ExploreContent({ initialLatestBicks, initialTrendingBicks }: Exp
       const nextCursor = data.nextCursor || null;
 
       if (isLoadMore) {
-        setBicks(prev => [...prev, ...newBicks]);
+        // Filter out duplicates by ID
+        setBicks(prev => {
+          const existingIds = new Set(prev.map(b => b.id));
+          const filteredNewBicks = newBicks.filter((b: BickWithAssets) => !existingIds.has(b.id));
+          return [...prev, ...filteredNewBicks];
+        });
       } else {
-        setBicks(newBicks);
+        setBicks(deduplicateBicks(newBicks));
       }
 
       setCursor(nextCursor);
@@ -84,11 +100,11 @@ export function ExploreContent({ initialLatestBicks, initialTrendingBicks }: Exp
     setSearchQuery('');
     setIsSearching(false);
     
-    // Use initial data for immediate response
+    // Use initial data for immediate response (deduplicated)
     if (tab === 'latest') {
-      setBicks(initialLatestBicks);
+      setBicks(deduplicateBicks(initialLatestBicks));
     } else {
-      setBicks(initialTrendingBicks);
+      setBicks(deduplicateBicks(initialTrendingBicks));
     }
     setCursor(null);
     setHasMore(true);

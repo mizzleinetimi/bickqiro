@@ -1,22 +1,32 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import Link from 'next/link';
 import { BickCard } from '@/components/bick/BickCard';
 import { SearchInput } from '@/components/search';
 import { PopularTags } from '@/components/tags/PopularTags';
-import type { BickWithAssets, TrendingBick } from '@/types/database.types';
+import type { TrendingBick } from '@/types/database.types';
+import type { BickWithOwner } from '@/lib/supabase/queries';
 
 const BICKS_PER_PAGE = 12;
 
 interface HomeContentProps {
-  initialLatestBicks: BickWithAssets[];
+  initialLatestBicks: BickWithOwner[];
   initialTrendingBicks: TrendingBick[];
 }
 
 export function HomeContent({ initialLatestBicks, initialTrendingBicks }: HomeContentProps) {
   const [activeTab, setActiveTab] = useState<'latest' | 'trending'>('latest');
-  const [bicks, setBicks] = useState<BickWithAssets[]>(initialLatestBicks);
+  // Deduplicate initial bicks to prevent React key warnings
+  const deduplicateBicks = (bicks: BickWithOwner[]): BickWithOwner[] => {
+    const seen = new Set<string>();
+    return bicks.filter(b => {
+      if (seen.has(b.id)) return false;
+      seen.add(b.id);
+      return true;
+    });
+  };
+  const [bicks, setBicks] = useState<BickWithOwner[]>(() => deduplicateBicks(initialLatestBicks));
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [cursor, setCursor] = useState<string | null>(null);
@@ -29,12 +39,12 @@ export function HomeContent({ initialLatestBicks, initialTrendingBicks }: HomeCo
     setActiveTab(tab);
     setLoading(true);
     
-    // Use initial data for instant switch
+    // Use initial data for instant switch (deduplicated)
     if (tab === 'latest') {
-      setBicks(initialLatestBicks);
+      setBicks(deduplicateBicks(initialLatestBicks));
       setHasMore(initialLatestBicks.length >= BICKS_PER_PAGE);
     } else {
-      setBicks(initialTrendingBicks);
+      setBicks(deduplicateBicks(initialTrendingBicks));
       setHasMore(initialTrendingBicks.length >= BICKS_PER_PAGE);
     }
     setCursor(null);
@@ -56,7 +66,12 @@ export function HomeContent({ initialLatestBicks, initialTrendingBicks }: HomeCo
       if (!response.ok) throw new Error('Failed to load more');
       
       const data = await response.json();
-      setBicks(prev => [...prev, ...data.bicks]);
+      // Filter out duplicates by ID
+      setBicks(prev => {
+        const existingIds = new Set(prev.map(b => b.id));
+        const newBicks = (data.bicks as BickWithOwner[]).filter(b => !existingIds.has(b.id));
+        return [...prev, ...newBicks];
+      });
       setCursor(data.nextCursor);
       setHasMore(!!data.nextCursor);
     } catch (error) {
