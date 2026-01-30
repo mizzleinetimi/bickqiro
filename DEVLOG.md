@@ -233,3 +233,39 @@
   - Thumbnail priority: thumbnail asset > og_image > default brand-thumb.jpg
   - Owner info now fetched in getLatestBicks, getTopTrendingBicks, and paginated variants
   - Fixed Next.js build error with useSearchParams requiring Suspense boundary
+
+## 2026-01-30 (evening)
+- **Goal**: UI polish - search, bick page, branding
+- **Outputs produced**:
+  - supabase/migrations/0006_saved_bicks.sql (saved bicks feature)
+  - supabase/migrations/0007_search_tags.sql (improved search with ILIKE + tag support)
+  - src/app/bick/[slugId]/page.tsx (thumbnail, action buttons, "made with bickqr" footer)
+  - src/components/share/CopyLinkButton.tsx, DownloadButton.tsx (accept className for color overrides)
+  - src/components/bick/BickCard.tsx (removed username display)
+  - public/favicon.svg (red/yellow quotation mark favicon)
+  - src/app/layout.tsx (updated to use SVG favicon)
+  - Deleted src/app/favicon.ico (old Vercel logo)
+- **Result**: Success - search now supports partial matching, bick page has thumbnail + branded footer
+- **Notes**: 
+  - Search uses ILIKE for flexible partial word matching (e.g., "yourself" finds "go f yourself")
+  - Bick page action buttons: Copy Link (blue), Download (green), Share (red)
+  - Footer shows quotation marks (red left, yellow right) + "bickqr" (red "bick", yellow "qr")
+  - Favicon: SVG with red/yellow quotation marks on dark background
+
+
+## 2026-01-30 (evening)
+- **Goal**: UI polish - search, thumbnails, branding
+- **Outputs produced**:
+  - src/components/bick/BickCard.tsx (removed username display)
+  - supabase/migrations/0007_search_tags.sql (ILIKE partial matching + tag search)
+  - src/app/bick/[slugId]/page.tsx (thumbnail, reorganized buttons, "made with bickqr" footer)
+  - src/components/share/DownloadButton.tsx, CopyLinkButton.tsx (accept className for color overrides)
+  - public/favicon.svg (red/yellow quotation mark favicon)
+  - src/app/layout.tsx (updated to use SVG favicon)
+  - Deleted src/app/favicon.ico (old Vercel logo)
+- **Result**: Success - cleaner BickCard, partial search works, branded favicon
+- **Notes**: 
+  - Search now uses ILIKE for flexible partial word matching (e.g., "yourself" finds "go f yourself")
+  - Bick page buttons: Copy Link (blue), Download (green), Share (red)
+  - Footer shows quotation mark icon with left quote red, right quote yellow
+  - Favicon: SVG with red (#EF4444) and yellow (#FCD34D) quotation marks on dark background
