@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Upload, TrendingUp, Bookmark } from 'lucide-react';
+import { Upload, TrendingUp, Heart } from 'lucide-react';
 import { getUser, getUserProfile } from '@/lib/auth/actions';
 import { UserMenu } from '@/components/auth/UserMenu';
 import { Logo } from './Logo';
@@ -7,7 +7,8 @@ import type { Profile } from '@/types/database.types';
 
 export async function NavShell() {
   const user = await getUser();
-  const profile: Profile | null = user ? await getUserProfile() : null;
+  // Pass user.id to avoid redundant auth call in getUserProfile
+  const profile: Profile | null = user ? await getUserProfile(user.id) : null;
 
   return (
     <header className="bg-gray-900/80 backdrop-blur-sm border-b border-gray-800 sticky top-0 z-40">
@@ -36,13 +37,19 @@ export async function NavShell() {
               <TrendingUp className="w-4 h-4" />
               Explore
             </Link>
+            <Link
+              href="/favorites"
+              className="flex items-center gap-2 text-gray-300 hover:text-white transition-colors"
+            >
+              <Heart className="w-4 h-4" />
+              Favorites
+            </Link>
             {user && (
               <Link
-                href="/saved"
+                href="/my-bicks"
                 className="flex items-center gap-2 text-gray-300 hover:text-white transition-colors"
               >
-                <Bookmark className="w-4 h-4" />
-                Saved
+                My Bicks
               </Link>
             )}
           </nav>
@@ -102,15 +109,13 @@ export async function NavShell() {
             <TrendingUp className="w-4 h-4" />
             Explore
           </Link>
-          {user && (
-            <Link
-              href="/saved"
-              className="flex items-center gap-2 text-gray-300 hover:text-white transition-colors text-sm"
-            >
-              <Bookmark className="w-4 h-4" />
-              Saved
-            </Link>
-          )}
+          <Link
+            href="/favorites"
+            className="flex items-center gap-2 text-gray-300 hover:text-white transition-colors text-sm"
+          >
+            <Heart className="w-4 h-4" />
+            Favorites
+          </Link>
         </nav>
       </div>
     </header>

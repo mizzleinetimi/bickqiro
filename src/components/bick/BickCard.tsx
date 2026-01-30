@@ -39,11 +39,11 @@ export function BickCard({ bick, variant = 'default', showTrending = false }: Bi
   const [isSaving, setIsSaving] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  // Check if bick is saved on mount
+  // Check if bick is favorited on mount (device-based, no auth)
   useEffect(() => {
-    fetch(`/api/bicks/${bick.id}/save`)
+    fetch(`/api/favorites/${bick.id}`)
       .then(res => res.json())
-      .then(data => setIsSaved(data.saved))
+      .then(data => setIsSaved(data.favorited))
       .catch(() => {});
   }, [bick.id]);
   
@@ -132,16 +132,18 @@ export function BickCard({ bick, variant = 'default', showTrending = false }: Bi
     setIsSaving(true);
 
     try {
-      const response = await fetch(`/api/bicks/${bick.id}/save`, {
-        method: newSavedState ? 'POST' : 'DELETE',
-      });
+      const response = newSavedState
+        ? await fetch('/api/favorites', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ bickId: bick.id }),
+          })
+        : await fetch(`/api/favorites/${bick.id}`, { method: 'DELETE' });
       
       if (!response.ok) {
-        // Revert on error
         setIsSaved(!newSavedState);
       }
     } catch {
-      // Revert on error
       setIsSaved(!newSavedState);
     } finally {
       setIsSaving(false);

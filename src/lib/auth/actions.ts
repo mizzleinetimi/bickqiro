@@ -89,17 +89,23 @@ export async function getUser() {
 
 /**
  * Get current user's profile with username
+ * Pass userId to avoid redundant auth calls
  */
-export async function getUserProfile(): Promise<Profile | null> {
+export async function getUserProfile(userId?: string): Promise<Profile | null> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
   
-  if (!user) return null;
+  // Use provided userId or fetch user (avoid double fetch when possible)
+  let uid = userId;
+  if (!uid) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return null;
+    uid = user.id;
+  }
 
   const { data: profile } = await supabase
     .from('profiles')
     .select('*')
-    .eq('id', user.id)
+    .eq('id', uid)
     .single();
 
   return profile as Profile | null;
