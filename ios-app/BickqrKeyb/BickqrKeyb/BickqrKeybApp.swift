@@ -1,7 +1,12 @@
+//
+//  BickqrKeybApp.swift
+//  BickqrKeyb
+//
+
 import SwiftUI
 
 @main
-struct BickqrKeyboardApp: App {
+struct BickqrKeybApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
