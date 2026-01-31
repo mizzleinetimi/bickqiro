@@ -118,6 +118,13 @@ export function BickCard({ bick, variant = 'default', showTrending = false }: Bi
       audioRef.current.pause();
       setIsPlaying(false);
     } else {
+      // Track play count
+      fetch(`/api/bicks/${bick.id}/track`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ eventType: 'play' }),
+      }).catch(() => {});
+      
       audioRef.current.play().catch(() => {});
       setIsPlaying(true);
     }

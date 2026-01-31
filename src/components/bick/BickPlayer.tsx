@@ -32,8 +32,6 @@ export function BickPlayer({ audioUrl, title, durationMs, minimal = false, bickI
   const [duration, setDuration] = useState(durationMs ? durationMs / 1000 : 0);
   const [error, setError] = useState<string | null>(null);
   
-  const hasPlayedRef = useRef(false);
-  
   const { track: trackPlay } = useTrackingDebounce({
     bickId: bickId || '',
     eventType: 'play',
@@ -71,9 +69,9 @@ export function BickPlayer({ audioUrl, title, durationMs, minimal = false, bickI
         audio.pause();
         setIsPlaying(false);
       } else {
-        if (!hasPlayedRef.current && bickId) {
+        // Track play on every play click
+        if (bickId) {
           trackPlay();
-          hasPlayedRef.current = true;
         }
         
         await audio.play();
