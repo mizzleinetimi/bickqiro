@@ -157,12 +157,38 @@ export function BickCard({ bick, variant = 'default', showTrending = false }: Bi
     }
   };
 
+  // Get teaser MP4 URL for sharing
+  const teaserAsset = bick.assets?.find(a => a.asset_type === 'teaser_mp4');
+  const teaserUrl = teaserAsset?.cdn_url;
+
   const handleShareClick = async (e: React.MouseEvent) => {
     e.stopPropagation();
     const shareUrl = `${window.location.origin}/bick/${bick.slug}-${bick.id}`;
     
     if (navigator.share) {
       try {
+        // Try to share MP4 video directly if available
+        if (teaserUrl && navigator.canShare) {
+          try {
+            const response = await fetch(teaserUrl);
+            const blob = await response.blob();
+            const fileName = `${bick.title.replace(/[^a-zA-Z0-9]/g, '_')}.mp4`;
+            const file = new File([blob], fileName, { type: 'video/mp4' });
+            
+            if (navigator.canShare({ files: [file] })) {
+              await navigator.share({
+                title: bick.title,
+                text: bick.description || `Check out "${bick.title}" on Bickqr`,
+                files: [file],
+              });
+              return;
+            }
+          } catch {
+            // Fall through to URL sharing
+          }
+        }
+        
+        // Fallback to URL sharing
         await navigator.share({
           title: bick.title,
           text: bick.description || `Check out "${bick.title}" on Bickqr`,
