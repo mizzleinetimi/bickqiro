@@ -28,14 +28,22 @@ COPY tsconfig.json ./
 COPY src/types ./src/types
 COPY src/lib/queue ./src/lib/queue
 
+# Copy brand assets for OG image generation
+COPY public/brand-thumb.jpg ./public/brand-thumb.jpg
+
 # Force fresh copy of worker directory
 COPY worker ./worker
+
+# Copy brand assets for OG image generation
+COPY public/brand-thumb.jpg ./public/brand-thumb.jpg
 
 # Verify the fix is present (will show in build logs)
 RUN echo "=== Verifying worker/api.ts ===" \
     && grep "impersonate chrome" worker/api.ts && echo "✓ impersonate chrome: FOUND" \
     && ! grep "\-f bestaudio" worker/api.ts && echo "✓ -f bestaudio: REMOVED" \
-    && echo "=== Verification complete ==="
+    && echo "=== Verification complete ===" \
+    && echo "=== Verifying brand assets ===" \
+    && ls -la public/brand-thumb.jpg && echo "✓ brand-thumb.jpg: FOUND"
 
 # Run the worker
 CMD ["npx", "tsx", "worker/index.ts"]

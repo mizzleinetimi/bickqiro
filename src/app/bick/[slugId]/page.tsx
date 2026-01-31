@@ -5,6 +5,7 @@ import { getBickBySlugAndId } from '@/lib/supabase/queries';
 import { parseSlugId } from '@/lib/utils/url';
 import { BickPlayer } from '@/components/bick/BickPlayer';
 import { BickJsonLd } from '@/components/bick/BickJsonLd';
+import { ProcessingState } from '@/components/bick/ProcessingState';
 import { DownloadButton } from '@/components/share/DownloadButton';
 import { UniversalShareButton } from '@/components/share/UniversalShareButton';
 import { CopyLinkButton } from '@/components/share/CopyLinkButton';
@@ -59,6 +60,31 @@ export default async function BickPage({ params }: BickPageProps) {
 
   const bick = await getBickBySlugAndId(parsed.slug, parsed.id);
   if (!bick) notFound();
+
+  // Show processing state for non-live bicks
+  if (bick.status === 'processing') {
+    return <ProcessingState title={bick.title} />;
+  }
+
+  // Show failed state
+  if (bick.status === 'failed') {
+    return (
+      <div className="max-w-2xl mx-auto py-12 px-4">
+        <div className="bg-surface rounded-2xl border border-red-500/30 p-8 shadow-2xl shadow-black/50 text-center">
+          <div className="mb-6">
+            <svg className="w-16 h-16 mx-auto text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <h1 className="text-2xl font-bold text-white mb-3">Processing Failed</h1>
+          <p className="text-gray-400 mb-6">Sorry, we couldn&apos;t process this bick.</p>
+          <a href="/upload" className="inline-block px-6 py-3 bg-brand-primary text-white rounded-lg hover:bg-red-600 transition-colors">
+            Try Again
+          </a>
+        </div>
+      </div>
+    );
+  }
 
   const audioAsset = bick.assets?.find(a => a.asset_type === 'audio' || a.asset_type === 'original');
   const ogImage = bick.assets?.find(a => a.asset_type === 'og_image');

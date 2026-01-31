@@ -269,3 +269,64 @@
   - Bick page buttons: Copy Link (blue), Download (green), Share (red)
   - Footer shows quotation mark icon with left quote red, right quote yellow
   - Favicon: SVG with red (#EF4444) and yellow (#FCD34D) quotation marks on dark background
+
+
+## 2026-01-30 (late evening)
+- **Goal**: Deploy worker to Railway + fix URL extraction on Vercel
+- **Outputs produced**:
+  - worker/Dockerfile (Node 20 + FFmpeg + yt-dlp via pip3)
+  - worker/api.ts (HTTP API for URL extraction with /extract and /health endpoints)
+  - worker/index.ts (imports and starts API server alongside BullMQ worker)
+  - railway.toml (Railway deployment config)
+  - src/app/api/bicks/extract-url/route.ts (proxies to Railway worker API)
+  - .env.example (added WORKER_API_URL)
+- **Result**: Success - worker deployed to Railway, URL extraction working via proxy
+- **Notes**: 
+  - Vercel serverless doesn't have yt-dlp, so extraction is proxied to Railway worker
+  - Worker API URL: https://bick-worker-production.up.railway.app
+  - Health check: /health returns {"status":"ok"}
+  - Extraction: POST /extract with {url} returns audioUrl, durationMs, sourceTitle, thumbnailUrl
+
+## 2026-01-30 (late evening continued)
+- **Goal**: Fix iOS app favorites functionality
+- **Outputs produced**:
+  - src/components/bick/BickCard.tsx (added data-favorite-bick attribute with serialized bick data)
+  - ios/BickqrKeyboard/Shared/Models.swift (made playCount and bickId optional for lenient decoding)
+  - ios/BickqrKeyboard/App/BrowseView.swift (improved JavaScript injection with error handling)
+  - src/app/api/favorites/route.ts (added X-Device-ID header support for iOS app)
+- **Result**: Success - iOS app can now save bicks from web view
+- **Notes**: 
+  - iOS app injects JavaScript to find save buttons and extract bick data
+  - Device favorites stored in Supabase with device_id from X-Device-ID header
+  - Made Swift model fields optional to handle missing data gracefully
+
+
+## 2026-01-30 (late evening)
+- **Goal**: Deploy worker to Railway + fix URL extraction on Vercel
+- **Outputs produced**:
+  - worker/Dockerfile (Node 20 + FFmpeg + yt-dlp via pip3)
+  - worker/api.ts (HTTP API for URL extraction with /extract and /health endpoints)
+  - worker/index.ts (imports and starts API server alongside BullMQ worker)
+  - railway.toml (Railway deployment config)
+  - src/app/api/bicks/extract-url/route.ts (proxies to Railway worker API)
+  - .env.example (added WORKER_API_URL)
+- **Result**: Success - worker deployed to Railway, URL extraction working via proxy
+- **Notes**: 
+  - Vercel serverless doesn't have yt-dlp, so extraction is proxied to Railway worker
+  - Worker API URL: https://bick-worker-production.up.railway.app
+  - Health check: /health returns {"status":"ok"}
+  - Extraction: POST /extract with {url} returns audioUrl, durationMs, sourceTitle, thumbnailUrl
+  - Need to add WORKER_API_URL env var to Vercel dashboard
+
+## 2026-01-30 (late evening continued)
+- **Goal**: Fix iOS app favorites functionality
+- **Outputs produced**:
+  - src/components/bick/BickCard.tsx (added data-favorite-bick attribute with serialized bick data)
+  - ios/BickqrKeyboard/Shared/Models.swift (made playCount and bickId optional for lenient decoding)
+  - ios/BickqrKeyboard/App/BrowseView.swift (improved JavaScript injection with error handling)
+  - src/app/api/favorites/route.ts (added X-Device-ID header support for iOS app)
+- **Result**: Success - iOS app can now save bicks via injected JavaScript
+- **Notes**: 
+  - iOS app injects JS to find data-favorite-bick attributes and extract bick data
+  - Made Swift model fields optional to handle missing/null values from API
+  - Favorites API accepts device ID from header for anonymous device-based favorites

@@ -115,7 +115,7 @@ export interface BickWithOwner extends BickWithAssets {
 
 /**
  * Fetch a single bick by slug and ID
- * Returns null if not found or not live
+ * Returns bick regardless of status (page handles different states)
  * Includes tags via separate query for proper join
  */
 export async function getBickBySlugAndId(
@@ -133,7 +133,6 @@ export async function getBickBySlugAndId(
     `)
     .eq('id', id)
     .eq('slug', slug)
-    .eq('status', 'live')
     .single();
 
   if (error || !bick) return null;
